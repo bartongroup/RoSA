@@ -1,0 +1,1161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <!-- Make sure the page conforms to xhtml -->
+
+<head>
+    <title> RNASeq Data Summary </title>
+    
+    <!-- Bootstrap core CSS -->
+    <!--link href="css/bootstrap.css" rel="stylesheet">
+    <!--link rel="stylesheet" type="text/css" href="DataTables/datatables.min.css"/-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.1.0/css/responsive.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/u/bs-3.3.6/jq-2.2.3,dt-1.10.12,b-1.2.0,b-flash-1.2.0,b-html5-1.2.0,r-2.1.0,se-1.2.0/datatables.min.css"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+    <link href="css/charts.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/custom.css">
+    
+</head>
+
+<body>
+<!-- set up document elements first -->
+
+
+<!-- BG header part -->
+<div class="container">
+<div class="page-header">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 >RNASeq Data Summary </h1>
+            
+            <table id="namestable">
+                <tr>
+                    <td style="padding:0 5px 0 0">Annotation file:</td>
+                    <td style="width:80%; vertical-align:top;" id="annotation_name"></td>
+                </tr>
+            </table>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+</div>
+
+<ul class="nav nav-tabs">
+    <li class="active"><a data-toggle="tab" href="#home"><h4>Main Summary</h4></a></li>
+    <li><a data-toggle="tab" href="#totals"><h4>Summary Totals</h4></a></li>
+</ul>
+
+<div class="tab-content">
+    <div id="home" class="tab-pane active">
+        <p>
+        <p>
+       
+    <ul class="nav nav-tabs">
+        <li class="active"><a data-toggle="tab" role="tab" href="#reads" id="reads_tab">Raw data</a></li>
+        <li><a data-toggle="tab" role="tab" href="#fpkm" id="fpkm_tab">FPKM ratios</a></li>
+    </ul>
+
+        <div class="tab-content">
+        <div id="reads" class="tab-pane active">
+
+   <!----------------------------------------------------------------------->
+   <!-- Data Table - reads
+   <!----------------------------------------------------------------------->
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="panel panel-default" style="border:0;">
+                <!--div class="panel-heading">Reads data</div-->
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table id="data_table"
+                            class="display table table-striped table-bordered dt-responsive custom" cellspacing="0" data-page-length="25"
+                            style="clear:both;table-layout:fixed;width:auto;">
+                            <thead>
+                                <tr>
+                                    <th>GeneID</th>
+                                    <th>Name</th>
+                                    <th>#reads in exons</th>
+                                    <th>#reads in introns</th>
+                                    <th>#reads in 3'UTRs</th>
+                                    <th>#reads in 5'UTRs</th>
+                                    <th>#antisense reads in exons</th>
+                                    <th>mean transcript length (bp)</th>
+                                    <th>#transcripts</th>
+                                    
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+            </div> <!-- end of tab pane -->
+
+            <div id="fpkm" class="tab-pane">
+        <!----------------------------------------------------------------------->
+   <!-- Data Table - stats
+   <!----------------------------------------------------------------------->
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="panel panel-default" style="border:0;">
+                <!--div class="panel-heading">FPKM data</div-->
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table id="data_table_fpkm"
+                            class="display table table-striped table-bordered dt-responsive custom" cellspacing="0" data-page-length="25"
+                            style="clear:both;table-layout:fixed;width:auto;">
+                            <thead>
+                                <tr>
+                                    <th>GeneID</th>
+                                    <th>Name</th>
+                                    <th>intron: exon ratio (FPKM)</th>
+                                    <th>5'UTRs: exon ratio (FPKM)</th>
+                                    <th>3'UTRs: exon ratio (FPKM)</th>
+                                    <th>antisense: exon ratio (FPKM)</th>
+                                    <th>5'UTRs: 3'UTRs ratio (FPKM)</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+                    </div> <!-- end of tab pane -->
+                </div> <!-- end of tab content -->
+    <!----------------------------------------------------------------------->
+    <!-- Annotation Data
+    <!----------------------------------------------------------------------->
+    <div class="page-header">
+        <div class="row">
+            <div class="col-lg-12">
+                <h4>Annotation data</h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Row of histograms -->
+    <div class="row">
+        
+        <!-- Transcript counts -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="tr_counts">
+            </div>
+        </div>
+        
+        <!-- Exon counts -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="exon_counts">
+            </div>
+        </div>
+        
+        <!-- Transcript lengths -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="tr_lengths_parent">
+            </div>
+        </div>
+
+    </div>
+    <!-- End row of histograms -->
+    
+    <!-- Row of histograms -->
+    <div class="row">
+        
+        <!-- Exon lengths -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="exon_lengths">
+            </div>
+        </div>
+        
+        <!-- Intron lengths -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="intron_lengths">
+            </div>
+        </div>
+        
+        <!-- 3' UTR lengths -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="tutr_lengths_parent">
+            </div>
+        </div>
+        
+        
+    </div>
+    <!-- End row of histograms -->
+    
+    <!-- Row of histograms -->
+    <div class="row">
+        
+        <!-- 5' UTR lengths -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="futr_lengths_parent">
+            </div>
+        </div>
+        
+        <!-- exon lengths by selected gene -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="subchart1" style="visibility:hidden">
+            </div>
+        </div>
+        
+        <!-- intron lengths by selected gene -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="subchart2" style="visibility:hidden">
+            </div>
+        </div>
+        
+        <!-- not used just now -->
+        <div class="col-lg-4">
+            <div class="panel panel-default" id="subchart3" style="visibility:hidden">
+            </div>
+        </div>
+    </div>
+    <!-- End row of histograms -->
+    
+    <!----------------------------------------------------------------------->
+    <!-- Reads Data
+    <!----------------------------------------------------------------------->
+    <div class="page-header">
+        <div class="row">
+            <div class="col-lg-12">
+                <h4>Reads data</h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Row of scatter plots: intron-exon, 3'UTR-exon -->
+    <div class="row">
+        <div class="col-lg-6">
+            
+            <div class="panel panel-default" id="intron-exon-parent">
+            </div>
+        </div>
+    
+
+        <div class="col-lg-6">
+            <div class="panel panel-default" id="tutr-parent">
+            </div>
+        </div>
+    </div>
+    <!-- End row of scatter plots -->
+    
+    <!-- Row of scatter plots: 5'UTR-exon, 3'UTR-5'UTR -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="panel panel-default" id="futr-parent">
+            </div>
+        </div>
+    
+        <div class="col-lg-6">
+            <div class="panel panel-default" id="tufu-parent">
+            </div>
+        </div>
+    </div>
+    <!-- End row of scatter plots -->
+    
+    <!-- Row of scatter plots: sense-antisense on exons -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="panel panel-default" id="anti-parent">
+            </div>
+        </div>
+        
+        
+    </div>
+    <!-- End row of scatter plots -->
+
+    <!-- Row of histograms -->
+      <div class="row">
+        <div class="col-lg-6">
+            <div class="panel panel-default" id="first_exons_parent">
+            </div>
+        </div>
+
+          <div class="col-lg-6">
+            <div class="panel panel-default" id="last_exons_parent">
+            </div>
+        </div>
+
+
+
+    </div>
+        <!-- End row of histograms -->
+    
+</div>
+
+
+
+<!-- end of tab1 -->
+
+<div id="totals" class="tab-pane">
+    <!--h3>Summary Totals</h3-->
+    <p>
+    <!----------------------------------------------------------------------->
+    <!-- Annotation Totals
+    <!----------------------------------------------------------------------->
+    <div class="row">
+    <div class="col-lg-6">
+        <div class="panel panel-default" id="annot_totals_parent">
+        </div>
+    </div>
+    </div>
+
+    <div class="row">
+    <div class="col-lg-6">
+        <div class="panel panel-default" id="read_totals_fwd_parent">
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="panel panel-default" id="read_totals_rev_parent">
+        </div>
+    </div>
+    </div>
+     <!-- /.col-lg-6 -->
+     
+     <!--div class="col-lg-6">
+         <div class="panel panel-default">
+             <div class="panel-heading">Reads totals</div>
+             <div class="panel-body" id="reads_totals_table">
+             </div>
+         </div>
+     </div>
+     <!-- /.col-lg-6 -->
+
+
+     
+     <div class="page-header">
+         <div class="row">
+             <div class="col-lg-12">
+                 <h4>Alignment quality summary</h4>
+             </div>
+         </div>
+     </div>
+     
+     <div class="col-lg-12">
+         <div id="qualitydata">
+             <div id="quality_charts" style='float:left'></div>
+         </div>
+     </div>
+     <!-- /.col-lg-12 -->
+     
+</div>
+<!-- end of tab2 -->
+</div>
+<!-- end of tab content -->
+</div>
+<!-- end of container -->
+
+<!-- script references -->
+<!--script src="scripts/d3.min.js"></script>
+<script src="scripts/jquery-2.1.4.min.js"></script>
+<script src="scripts/bootstrap.js"></script>
+<script src="DataTables/datatables.min.js"></script>
+
+<!-- compiled and minified JavaScript -->
+
+<script src="http://code.jquery.com/jquery-2.2.3.min.js"></script>
+<!--script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script-->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<!-- do not include bootstrap.min.js separately, as it is included in the datatables js: adding again will break some
+bootstrap components, e.g. dropdown menus (as used for scale and normalisation) --->
+<script type="text/javascript" src="https://cdn.datatables.net/u/bs-3.3.6/jq-2.2.3,dt-1.10.12,b-1.2.0,b-flash-1.2.0,b-html5-1.2.0,r-2.1.0,se-1.2.0/datatables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.1.0/js/dataTables.responsive.min.js"></script>
+
+<!-- bootstrap stylesheet here to get tooltip text correctly formatted -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+
+
+
+
+<script src="scripts/radar-chart.js"></script>
+<script src="scripts/charts.js"></script>
+<script src="scripts/chartdefs.js"></script>
+<script src="scripts/excludeNaN.js"></script>
+
+<script>
+
+/***********************************************************************************/
+// Global variables
+/***********************************************************************************/
+
+var theTable = null; //reference to datatable
+var theFPKMTable = null;
+var tabchange = false;
+var selected_row = null;
+
+var all_histograms = [svg_hist_exon, svg_hist_intron, svg_exon_count,
+                      svg_tr_count, svg_tutr_lengths, svg_futr_lengths, svg_tr_lengths,
+                      svg_first_exons, svg_last_exons];
+var all_scatters = [svg_intron_exon_scatter, svg_tutr_exon_scatter,
+                  svg_futr_exon_scatter, svg_tufu_scatter, svg_sense_scatter];
+var all_barcharts = [svg_annot_totals, svg_read_totals_fwd, svg_read_totals_rev];
+var subcharts = [svg_gene_exons, svg_gene_introns]; //, svg_gene_len_by_exon];
+
+var ensembl_url = "http://plants.ensembl.org/Arabidopsis_thaliana/Gene/Summary?g=";
+
+var table_source = "genes.json";
+
+
+/***********************************************************************************/
+// Callbacks
+/***********************************************************************************/
+function tooltip_callback(d, config)
+{
+    return (d[config.iindex] + "<br/> " + config.xlabel + ": " + d3.format(",.0f")(d[config.xindex]) + "<br/>"
+                    + config.ylabel + ": " + d3.format(",.0f")(d[config.yindex]))
+}
+
+function update_plots_callback(update_table)
+{
+    if (update_table)
+    {
+        update_table_selection(charts.selected_point, theTable);
+        update_table_selection(charts.selected_point, theFPKMTable);
+    }
+    else
+    {
+        // update_table is false, so call is from table, either directly, or from chart update
+        // this way means charts are only updated once
+
+        // In every scatter plot, colour the points corresponding to the selected gene
+        for (var i=0; i < all_scatters.length; i++)
+        {
+            charts.update_scatter_selection(all_scatters[i].config);
+        }
+
+        // In every histogram, colour the bars corresponding to the selected gene
+        for (var i = 0; i < all_histograms.length; i++)
+        {
+            charts.update_hist_selection(all_histograms[i].config);
+        }
+
+        load_gene_sub_charts();
+    }
+
+};
+
+/***********************************************************************************/
+// Creation of panel and button html for each graph
+/***********************************************************************************/
+
+// Add panel and content to parent
+// parent: document element to add panel to
+// title: panel title
+// id: id to assign to panel body
+// buttons: list of buttons to be added to panel header
+function add_panel(parent, title, id, buttons)
+{
+    // panel header
+    var header_div = document.createElement('div');
+    header_div.className = 'panel panel-heading clearfix';
+    
+    add_button_groups(header_div, buttons);
+    
+    //add title after buttons to avoid problems with text sizing and placement
+    header_div.innerHTML += '<h2 class="panel-title">' + title + '</h2>';
+    
+    // panel body
+    var body_div = document.createElement('div');
+    body_div.className = 'panel-body';
+    body_div.id = id;
+    
+    // add the panel header and body to parent
+    document.getElementById(parent).appendChild(header_div);
+    document.getElementById(parent).appendChild(body_div);
+}
+
+// Add one or more button groups
+// buttons: list of button group definition objects, where each object
+// consists of a dropdown button_label and a list of entries each with id and label
+function add_button_groups(parent, buttons)
+{
+    for (group of buttons)
+    {
+        // position button at right
+        var div1 = document.createElement('div');
+        div1.className = "pull-right";
+    
+        // build button group
+        var div2 = document.createElement('div');
+        div2.className = "btn-group";
+        div1.appendChild(div2);
+    
+        // html for button dropdown, easier than adding as separate elements
+        var htmlstring = "<button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>";
+        htmlstring += group.button_label;
+        htmlstring += "<span class='caret'></span> </button> <ul class='dropdown-menu pull-right' role='menu'>";
+    
+        for (elem of group.button_list)
+        {
+            var elemstring = "<li><a href='#' id='" + elem.id + "'>" + elem.label + "</a></li>";
+            htmlstring += elemstring;
+        }
+        htmlstring += "</ul>";
+    
+        // stick it all together
+        div2.innerHTML = htmlstring;
+        parent.appendChild(div1);
+    }
+}
+
+
+    /***********************************************************************************/
+    // Creation of button event handlers
+    /***********************************************************************************/
+
+    for (g of all_histograms)
+    {
+        make_buttons(g);
+    }
+    for (g of all_scatters)
+    {
+        make_buttons(g);
+    }
+
+    function make_buttons(g)
+    {
+        for (bg of g.buttons)
+        {
+            if (bg.buttonset == "Scale")
+            {
+                for (btn of bg.button_list)
+                {
+                    // click event handler for each scale button
+                    $("#"+g.parent_id).on('click', "#" + btn.id,
+                                          { chart: g, scale: btn.scale, id: "#" + btn.id } , scale_button);
+                }
+            }
+            else if (bg.buttonset == "Norm")
+            {
+                for (btn of bg.button_list)
+                {
+                    // click event handler for each normalisation button
+                    $("#"+g.parent_id).on('click', "#" + btn.id,
+                                          { chart: g, norm: btn.norm, id: "#" + btn.id } , fpkm_button);
+                }
+            }
+        }
+    }
+
+    /***********************************************************************************/
+    // Event handler for Scale buttons
+    /***********************************************************************************/
+
+    // function to set scale and reload chart
+    function scale_button(event)
+    {
+        event.data.chart.config.scale_type = event.data.scale;
+        if (event.data.scale == "linear")
+        {
+            $(event.data.id).closest("div").children("button").text("Linear scale ")
+        }
+        else
+        {
+            $(event.data.id).closest("div").children("button").text("Log scale ")
+        }
+        reload_chart(event.data.chart);
+        event.preventDefault(); //prevent default event call which will move back to top of web page
+    }
+
+    /***********************************************************************************/
+    // Event handler for FPKM buttons
+    /***********************************************************************************/
+    
+    // function to set normalisation and reload chart
+    function fpkm_button(event)
+    {
+        if (event.data.norm == "raw")
+        {
+            if (event.data.chart.config.suffix == "-FPKM")
+            {
+                event.data.chart.config.suffix = "";
+                event.data.chart.config.xname = event.data.chart.config.xname.slice(0, -5);
+                event.data.chart.config.yname = event.data.chart.config.yname.slice(0, -5);
+                event.data.chart.config.xlabel = event.data.chart.config.xlabel.slice(0, -5);
+                event.data.chart.config.ylabel = event.data.chart.config.ylabel.slice(0, -5);
+                event.data.chart.config.xindex = event.data.chart.columns.indexOf(event.data.chart.config.xname);
+                if (event.data.chart.config.yname != null)
+                {
+                    event.data.chart.config.yindex = event.data.chart.columns.indexOf(event.data.chart.config.yname);
+                }
+            }
+            $(event.data.id).closest("div").children("button").text("Raw counts  ")
+        }
+        else
+        {
+            if (event.data.chart.config.suffix == "")
+            {
+                var suffix = "-FPKM";
+                event.data.chart.config.suffix = suffix;
+                event.data.chart.config.xname += suffix;
+                event.data.chart.config.yname += suffix;
+                event.data.chart.config.xindex = event.data.chart.columns.indexOf(event.data.chart.config.xname);
+                event.data.chart.config.yindex = event.data.chart.columns.indexOf(event.data.chart.config.yname);
+                event.data.chart.config.xlabel += suffix;
+                event.data.chart.config.ylabel += suffix;
+            }
+            
+            $(event.data.id).closest("div").children("button").text("FPKM  ");
+        }
+        reload_chart(event.data.chart);
+        
+        event.preventDefault(); //prevent default event call which will move back to top of web page
+    }
+
+
+    /***********************************************************************************/
+    // Document load
+    /***********************************************************************************/
+    $(document).ready(function()
+    {
+        // adjust datatable column widths - doesn't happen automatically :-(
+        $("a[data-toggle=\"tab\"]").on("shown.bs.tab", function (e) {
+            tabchange = true;
+            if (e.target.id == "reads_tab")
+            {
+                //removed as causing first column to resize incorrectly... theTable.columns.adjust().responsive.recalc();
+                update_table_selection(charts.selected_point, theTable);
+            }
+            else
+            {
+                theFPKMTable.columns.adjust().responsive.recalc();
+                update_table_selection(charts.selected_point, theFPKMTable);
+            }
+            tabchange = false;
+        });
+
+        var data_sources = new Set();
+
+        // load panels for every chart
+        for (chart of all_histograms)
+        {
+           add_panel(chart.parent_id, chart.title, chart.config.id, chart.buttons);
+           data_sources.add(chart.json);
+        }
+        for (chart of all_scatters)
+        {
+           add_panel(chart.parent_id, chart.title, chart.config.id, chart.buttons);
+           data_sources.add(chart.json);
+        }
+        for (chart of subcharts)
+        {
+            add_panel(chart.parent_id, chart.title, chart.config.id, chart.buttons);
+            data_sources.add(chart.json);
+        }
+        for (chart of all_barcharts)
+        {
+            add_panel(chart.parent_id, chart.title, chart.config.id, chart.buttons);
+        }
+
+        // load data by datasource (seems to be faster than loading for each chart)
+        for (source of data_sources)
+        {
+            load_data(source);
+        }
+
+        // set up the table
+        var selected_row = null;
+                      
+        // load details of which files were used to generate the data
+        $.ajax(
+                {
+               url: "metadata.json",
+               dataType: "json",
+               success: function(data)
+               {
+                display_meta(data);
+               },
+               error: function()
+               {
+               alert("Error loading experiment metadata");
+               }
+               });
+         
+        // load total counts data
+        $.ajax(
+               {
+                url: "totals.json",
+                dataType: "json",
+                success: function(data)
+                {
+                    display_totals(data);
+                },
+                error: function()
+                {
+                    alert("Error reading annotation totals");
+                }
+                });
+        
+        // load reads totals data
+        $.ajax(
+                {
+               url: "matches.json",
+               dataType: "json",
+               success: function(data)
+               {
+                display_reads_totals(data);
+               },
+               error: function()
+               {
+               alert("Error reading reads match counts");
+               }
+               });
+                      
+                      
+        // load radar chart data
+       $.ajax(
+            {
+            url: "logsummaries.json",
+            dataType:"json",
+            success: function(data)
+            {
+               charts.draw_radar_plot(data);
+            }
+        });
+    });
+    
+    function load_data(source)
+    {
+        $.ajax(
+               {
+               url: source, // path to file
+               dataType: "json", // type of file (text, json, xml, etc)
+               
+               success: function(data)
+               {
+                    if (source == table_source)
+                    {
+                        load_datatable(data)
+                    }
+                    for (chart of all_scatters)
+                    {
+                        if (chart.json == source)
+                        {
+                            chart.config.data = data.data;
+                            chart.columns = data.columns;
+                            set_col_indices(chart.config, data.columns)
+                            charts.draw_scatter_plot(chart.config);
+                        }
+                    }
+                    for (chart of all_histograms)
+                    {
+                        if (chart.json == source)
+                        {
+                            chart.config.data = data.data;
+                            set_col_indices(chart.config, data.columns)
+                            charts.draw_histogram(chart.config);
+                        }
+                    }
+                    for (chart of subcharts)
+                    {
+                        if (chart.json == source)
+                        {
+                            chart.maindata = data.data;
+                            set_col_indices(chart.config, data.columns)
+                        }
+                    }
+               
+               },
+               error: function()
+               { // callback if there's an error
+               alert("Error loading data source " + source);
+               }
+               });
+    }
+
+    function set_col_indices(config, cols)
+    {
+        //get the indices of the index, xname and yname
+        config.iindex = cols.indexOf(config.index);
+        config.xindex = cols.indexOf(config.xname);
+        if (config.yname != null)
+        {
+            config.yindex = cols.indexOf(config.yname);
+        }
+    }
+
+    function load_datatable(alldata)
+    {
+        theTable = $('#data_table').DataTable( {
+
+        autoWidth: true,   //automatically resize columns to fit data
+        data: alldata.data,
+        deferRender : true,
+
+        //dom: '<"clear">lfBrtip',
+        buttons: [ 'csv' ],
+        columns: [
+            { data: alldata.columns.indexOf("gene_id"),
+                  render: function ( data, type, full, meta ) {
+                  return '<a href="' + ensembl_url + data+'" target="_blank">' + data + '</a>';
+                  }},
+            { data: alldata.columns.indexOf("Name")},
+            { data: alldata.columns.indexOf("exon")},
+            { data: alldata.columns.indexOf("intron")},
+            { data: alldata.columns.indexOf("three_prime_UTR")},
+            { data: alldata.columns.indexOf("five_prime_UTR")},
+            { data: alldata.columns.indexOf("antisense")},
+            { data: null,
+                  render: function(data, type, row){
+                  return row[alldata.columns.indexOf("length")].toFixed(3);
+                  }},
+            { data: alldata.columns.indexOf("transcript_counts")}
+        ],
+        rowId: alldata.columns.indexOf("gene_id"),
+        scrollY: "400px",   //scrollbar, with table at 400px height
+        scrollCollapse: true, //allow the height to be less if container bigger than scroll height
+
+        select: {
+            style: 'single'
+        }
+        } );
+
+
+        theFPKMTable = $('#data_table_fpkm').DataTable( {
+
+        autoWidth: true,   //automatically resize columns to fit data
+        data: alldata.data,
+        deferRender : true,
+        //dom: 'B<"clear">lfrtip',
+        buttons: [ 'csv' ],
+        columnDefs: [
+            { "type": 'excludeNaN',
+              "targets": [1,2,3,4,5] }],
+        columns: [
+            { data: alldata.columns.indexOf("gene_id"),
+                  render: function ( data, type, full, meta ) {
+                  return '<a href="' + ensembl_url + data+'" target="_blank">' + data + '</a>';
+                  }},
+            { data: alldata.columns.indexOf("Name")},
+            { data: null,
+                  render: function(data, type, row){
+                  return (row[alldata.columns.indexOf("intron-FPKM")] / row[alldata.columns.indexOf("exon-FPKM")]).toFixed(3) ;
+                  }},
+            { data: null,
+                  render: function(data, type, row){
+                  return (row[alldata.columns.indexOf("five_prime_UTR-FPKM")] / row[alldata.columns.indexOf("exon-FPKM")]).toFixed(3) ;
+                  }},
+            { data: null,
+                  render: function(data, type, row){
+                  return (row[alldata.columns.indexOf("three_prime_UTR-FPKM")] / row[alldata.columns.indexOf("exon-FPKM")]).toFixed(3) ;
+                  }},
+            { data: null,
+                  render: function(data, type, row){
+                  return (row[alldata.columns.indexOf("antisense-FPKM")] / row[alldata.columns.indexOf("exon-FPKM")]).toFixed(3) ;
+                  }},
+            { data: null,
+                  render: function(data, type, row){
+                  return (row[alldata.columns.indexOf("three_prime_UTR-FPKM")] / row[alldata.columns.indexOf("five_prime_UTR-FPKM")]).toFixed(3) ;
+                  }}
+        ],
+        rowId: alldata.columns.indexOf("gene_id"),
+        scrollY: "400px",   //scrollbar, with table at 400px height
+        scrollCollapse: true, //allow the height to be less if container bigger than scroll height
+
+        select: {
+            style: 'single'
+        }
+        } );
+
+        // Table select/deselect event handlers
+        theTable.on( 'select', select_table_row);
+        theTable.on( 'deselect', deselect_table_row);
+
+        theFPKMTable.on( 'select', select_table_row);
+        theFPKMTable.on( 'deselect', deselect_table_row);
+
+        tables = [theTable, theFPKMTable];
+
+    }
+
+    function select_table_row(e, dt, type, indexes)
+    {
+        if (!tabchange)
+        {
+            if ( type === 'row' )
+            {
+                var d = dt.rows( indexes ).data().pluck(0);
+
+                // get the gene selected in the table and highlight in plots
+                charts.selected_point = d[0];
+
+                update_plots_callback(false);
+            }
+        }
+    }
+
+    function deselect_table_row(e, dt, type, indexes)
+    {
+        if (!tabchange)
+        {
+            //reset the selected gene, and update the plots
+
+            charts.selected_point = null;
+            update_plots_callback(false);
+            for (sub of subcharts)
+            {
+                $('#'+sub.parent_id).css('visibility', 'hidden');
+            }
+        }
+    }
+
+    update_table_selection = function (selected_point, table)
+    {
+        // In the datatable, locate and highlight the selected gene
+        if (selected_point != null)
+        {
+            // select the selected gene in the table
+            selected_row = table.row('#'+selected_point).select();
+
+            //just need to update the table page now
+            //first get the row number
+            //then divide row number by entries per page
+            var pagenum = Math.floor(selected_row[0][0] / table.page.len());
+            table.page(pagenum).draw( 'page' );
+        }
+        else if (selected_row != null)
+        {
+            table.row(selected_row).deselect();  //faster than accessing via selected_point
+        }
+    }
+
+    // Similar to load_data but runs on an individual chart
+    function reload_chart(chart)
+    {
+        $.ajax(
+               {
+               url: chart.json, // path to file
+               dataType: "json", // type of file (text, json, xml, etc)
+               success: function(data)
+               {
+                if (chart.config.chart_type == "histogram")
+                {
+                    charts.draw_histogram(chart.config);
+                }
+                else if (chart.config.chart_type == "scatter")
+                {
+                    charts.draw_scatter_plot(chart.config);
+                }
+               },
+               error: function()
+               { // callback if there's an error
+                alert("error");
+               }
+            });
+    }
+
+    // Load subcharts which depend on a gene being selected
+    function load_gene_sub_charts()
+    {
+        if (charts.selected_point != null)
+        {
+            for (chart of subcharts)
+            {
+                if (chart.maindata == null)
+                {
+                    //don't try to draw graphs without data
+                    break;
+                }
+
+                chart.config.data = chart.maindata.filter(function (row)
+                                       {
+                                        if(row[chart.config.iindex] == charts.selected_point)
+                                        {
+                                            return true;
+                                        }
+                                        else
+                                        {
+                                            return false;
+                                        }
+                                        });
+
+                // draw the chart
+                if (chart.config.chart_type == "histogram")
+                {
+                    charts.draw_histogram(chart.config);
+                }
+                else if (chart.config.chart_type == "scatter")
+                {
+                    charts.draw_scatter_plot(chart.config);
+                }
+                else if (chart.config.chart_type == "barchart")
+                {
+                    charts.draw_barchart(chart.config);
+                }
+            }
+
+            for (sub of subcharts)
+            {
+                $('#'+sub.parent_id).css('visibility', 'visible');
+            }
+        }
+        else
+        {
+            for (sub of subcharts)
+            {
+                $('#'+sub.parent_id).css('visibility', 'hidden');
+            }
+        }
+    }
+
+
+
+/***********************************************************************************/
+// Window resize event handler
+/***********************************************************************************/
+/*$(window).resize(function()
+                 {
+                 var aspect = 1;
+                 for (plot of all_histograms)
+                 {
+                 var width = $(plot.id).width();
+                 plot.svg.attr("width", width);
+                 plot.svg.attr("height", width * aspect);
+                 };
+                 for (plot of all_scatters)
+                 {
+                 var width = $(plot.id).width();
+                 plot.svg.attr("width", width);
+                 plot.svg.attr("height", width * aspect);
+                 };
+                 });
+
+
+
+/***********************************************************************************/
+// Display the annotation and reads files names
+/***********************************************************************************/
+function display_meta(data)
+{
+    // set the annotation file name
+    document.getElementById("annotation_name").innerHTML = data.annotation;
+    
+    // make a table row for the reads file data
+    var reads_html = '<td style="vertical-align:top">Reads file(s):</td> ' +
+    '<td style="width:80%; vertical-align:top">';
+    
+    // loop over the list of reads files and add each one
+    for (var i=0; i<data.reads_files.length; i++)
+    {
+        var next = data.reads_files[i]
+        reads_html += next
+        if (i < data.reads_files.length-1)
+        {
+            reads_html += '<br>'
+        }
+    }
+    reads_html += '</td>'
+    
+    // insert the new row and set its html to the row just created
+    var newrow = document.getElementById("namestable").insertRow(1)
+    newrow.innerHTML = reads_html
+}
+
+/***********************************************************************************/
+// Display the total counts
+/***********************************************************************************/
+
+function display_totals(data)
+{
+    var data_obj = data;
+    data_obj.forEach(function(val, i) {
+        val.value_text = val.value;
+        val.value = parseFloat(val.value.replace(/,/g,''));
+        val.name = val.name.slice(15);
+    });
+
+    svg_annot_totals.config.data = data_obj;
+    charts.draw_barchart(svg_annot_totals.config);
+}
+
+/***********************************************************************************/
+// Display the reads totals
+/***********************************************************************************/
+function display_reads_totals(data)
+{
+    display_strand(data, "forward strand", svg_read_totals_fwd);
+    display_strand(data, "reverse strand", svg_read_totals_rev);
+}
+
+function display_strand(data, strand_name, svg)
+{
+    newdata = [];
+    data[strand_name].forEach(function (val, i) {
+        var datum = {name: "", value: 0, value_text: ""};
+
+        datum.name = val[0];
+        datum.value = parseFloat(val[1].replace(/,/g,''));
+        datum.value_text = val[1];
+        newdata.push(datum);
+    });
+
+    svg.config.data = newdata;
+    charts.draw_barchart(svg.config);
+}
+
+/***********************************************************************************/
+// This function creates a standard table with column/rows
+// Parameter Information
+// objArray = Anytype of object array, like JSON results
+// numbercols = list of columns with numeric values
+// theme (optional) = A css class to add to the table (e.g. <table class="<theme>">
+// enableHeader (optional) = Controls if you want to hide/show, default is show
+/***********************************************************************************/
+function CreateTableView(objArray, theme, enableHeader) {
+    // set optional theme parameter
+    if (theme === undefined) {
+        theme = 'mediumTable'; //default theme
+    }
+    
+    if (enableHeader === undefined) {
+        enableHeader = true; //default enable headers
+    }
+    
+    // If the returned data is an object do nothing, else try to parse
+    var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+    
+    var str = '<table class="' + theme + '">';
+    
+    // table head
+    if (enableHeader) {
+        str += '<thead><tr>';
+        for (var index in array[0]) {
+            str += '<th scope="col">' + index + '</th>';
+        }
+        str += '</tr></thead>';
+    }
+    
+    // table body - ignore first index col
+    str += '<tbody>';
+    for (var i = 0; i < array.length; i++) {
+        str += (i % 2 == 0) ? '<tr class="alt">' : '<tr>';
+        for (var index in array[i]) {
+            if (index != "index")
+            {
+                str += '<td>' + array[i][index] + '</td>';
+            }
+        }
+        str += '</tr>';
+    }
+    str += '</tbody>'
+    str += '</table>';
+    return str;
+}
+
+</script>
+</body>
+
+</html>

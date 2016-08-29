@@ -1,0 +1,2 @@
+graft viewseq/websummary   # include entire websummary tree
+graft viewseq/configdata

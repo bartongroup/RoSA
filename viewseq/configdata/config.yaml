@@ -1,0 +1,34 @@
+#An example yaml config file
+
+######################################################################################
+# Inputs
+
+# path to annotation file, which can be gtf or gff
+annotation: /Users/kmourao/Documents/kmourao/DataSummariser/trunk/tests/Data/mini.gff
+
+# reads files (bam format), can be more than one
+readsfiles:
+ - /Users/kmourao/Documents/kmourao/DataSummariser/trunk/tests/Data/mini.bam 
+
+# prefix to use on output files generated
+outputprefix: polyCol
+
+# location to output files to
+outputdir: .
+
+######################################################################################
+# featureCounts details
+
+featureCounts_exe: 
+featureCounts_options: -p -s 2   # -A chromosomes.txt
+
+######################################################################################
+# samTools details
+
+samTools_exe: samtools
+
+######################################################################################
+# STAR summary details
+
+STAR_rootpath: /Users/kmourao/Documents/Arabidopsis_RNAMeth_polyA
+STAR_logfilename: Log.final.out
