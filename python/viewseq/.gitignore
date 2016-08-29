@@ -1,0 +1,12 @@
+*.pyc
+.*
+cover
+summariser/.*
+summariser/cover/
+tests/.*
+tests/cover
+summariser-log*
+*~
+tests/output
+tests/cover
+example/

@@ -1,0 +1,71 @@
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #eee;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}
+
+.axis-label text {
+    font-family: sans-serif;
+    font-size: 14px;
+}
+
+.loading {
+    font-family: sans-serif;
+    font-size: 15px;
+}
+
+.circle {
+    fill: steelblue;
+    stroke: steelblue;
+    stroke-width: 8;
+}
+
+.bar {
+    fill: steelblue;
+}
+
+.tooltip {
+    position: absolute;
+    width: 280px;
+    height: 68px;
+    pointer-events: none;
+    line-height: 1;
+    font-weight: bold;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    border-radius: 2px;
+}
+
+highlight_canvas {
+    z-index: 3;
+    position: absolute;
+}
+
+select_canvas {
+    z-index: 4;
+    position: absolute;
+}
+
+canvas {
+    z-index: 2;
+    position: absolute;
+}
+
+.absolute_svg {
+    z-index: 1;
+    position: absolute;
+}
+.wrapper {
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 540px;
+    height: 540px;
+}
