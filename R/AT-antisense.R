@@ -60,6 +60,7 @@ plot_histograms_bygene <- function(result, replicates, name1, name2, rcurve=NULL
   
   pdf(file=name2,width=10,height=8)
   
+  par(mfrow = c(3,2))
   f <- lapply(1:length(result), function(i) plot_histogram_pair_bygene(result[[i]], "rev", replicates[i]))
     
   #if (!is.null(rcurve))
