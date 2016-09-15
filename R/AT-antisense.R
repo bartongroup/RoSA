@@ -73,10 +73,10 @@ plot_histograms_bygene <- function(result, replicates, name1, name2, rcurve=NULL
 
 plot_histogram_pair_bygene <- function(d, dir, rep)
 {
-  raw = paste(dir, ".sense", sep="")
+  raw = paste(dir, ".anti", sep="")
   adj = paste("adj", dir, sep="")
-  xlims = c(0,7)
-  ylims = c(0,2500)
+  xlims = c(0,6)
+  ylims = c(0,1500)
   
   r <- as.numeric(d[[raw]]) 
   h <- hist(log10(r), breaks=50, col="lightblue", xlab="log10(Antisense counts)", 

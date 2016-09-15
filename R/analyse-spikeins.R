@@ -12,7 +12,10 @@
 # aslog: TRUE if plotting log/log else FALSE
 plot_spikeins <- function(sp, name, label, xmax, ymax, aslog=TRUE)
 {
-  pdf(file=name,width=7,height=6)
+  if (!is.null(name))
+  {
+    pdf(file=name,width=7,height=6)
+  }
   
   if (!aslog)
   {
@@ -30,7 +33,11 @@ plot_spikeins <- function(sp, name, label, xmax, ymax, aslog=TRUE)
     abline(lm(log10(sp$sense)[use] ~ log10(sp$anti)[use]), col='blue')
   }
   title(main=paste(label, " spike-ins: sense vs antisense counts", sep=""))
-  dev.off()
+  
+  if (!is.null(name))
+  {
+    dev.off()
+  }
 }
 
 ##############################################################################################################
@@ -362,9 +369,12 @@ calcratio <- function(condition, path)
 # ymax: max extent of histogram y-axis
 # name: name of file to save plot to, must end in .pdf
 # rcurve: dataset to plot fitted curve for (can be different to r!)
-plot_histogram <- function(r, xmax, ymax, name, rcurve=NULL)
+plot_histogram <- function(r, xmax, ymax, name=NULL, rcurve=NULL)
 {
-  pdf(file=name,width=7,height=5)
+  if (!is.null(name))
+  {
+    pdf(file=name,width=7,height=5)
+  }
   h <- hist(r, breaks=75, col="lightblue", xlab="Antisense:sense ratio", 
             ylab="Number of replicates", main="Distribution of antisense:sense ratios by replicate",
             xlim=c(0,xmax), ylim=c(0,ymax))
@@ -374,7 +384,10 @@ plot_histogram <- function(r, xmax, ymax, name, rcurve=NULL)
     fitnormal(rcurve, h, xmax)
   }
   
-  dev.off()
+  if (!is.null(name))
+  {
+    dev.off()
+  }
 }
 
 ##############################################################################################################
