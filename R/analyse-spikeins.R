@@ -19,18 +19,23 @@ plot_spikeins <- function(sp, name, label, xmax, ymax, aslog=TRUE)
   
   if (!aslog)
   {
-    plot(sp$anti, sp$sense, pch=21, cex=0.8, col='blue', bg='cyan', 
-         xlab = 'Antisense counts', 
-         ylab = 'Sense counts', xlim = c(0,xmax), ylim = c(0,ymax))
-    abline(lm(sp$sense ~ 0 + sp$anti), col='blue')
+    plot(sp$sense, sp$anti, pch=21, cex=0.8, col='blue', bg='cyan', 
+         xlab = 'Sense counts', 
+         ylab = 'Antisense counts', xlim = c(0,xmax), ylim = c(0,ymax))
+    abline(lm(sp$anti ~ 0 + sp$sense), col='blue')
   }
   else
   {
-    plot(log10(sp$anti), log10(sp$sense), pch=21, cex=0.8, col='blue', bg='cyan',
-         xlab = 'log(Antisense counts)',
-         ylab = 'log(Sense counts)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
-    use <- is.finite(log10(sp$sense)) & is.finite(log10(sp$anti))
-    abline(lm(log10(sp$sense)[use] ~ log10(sp$anti)[use]), col='blue')
+    plot(log10(sp$sense+1), log10(sp$anti+1), pch=21, cex=0.8, col='blue', bg='cyan',
+         xlab = 'log(Sense counts+1)',
+         ylab = 'log(Antisense counts+1)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
+    use <- is.finite(log10(sp$sense+1)) & is.finite(log10(sp$anti+1))
+    
+    model = lm(log10(sp$anti+1)[use] ~ log10(sp$sense+1)[use])
+    if (!is.na(model$coefficients[2])) # don't draw a line if gradient is infinite
+    {
+      abline(model, col='blue')
+    }
   }
   title(main=paste(label, " spike-ins: sense vs antisense counts", sep=""))
   
@@ -77,23 +82,23 @@ plot_antisensedata_and_spikeins <- function(data, sp, label, name, aslog=TRUE,
   pdf(file=name,width=7,height=6)
   if (!aslog)
   {
-    plot(data$anticounts, data$sensecounts, pch=data_pch, cex=0.5, col="black", 
-         xlab='Antisense counts', ylab='Sense counts', xlim = c(0,xmax), ylim = c(0,ymax))
+    plot(data$sensecounts, data$anticounts, pch=data_pch, cex=0.5, col="black", 
+         xlab='Sense counts', ylab='Antisense counts', xlim = c(0,xmax), ylim = c(0,ymax))
     par(new=TRUE)
-    plot(sp$anti, sp$sense, pch=sp_pch, cex=0.8, col='blue', bg='cyan', axes = FALSE, xlab = '', ylab = '', 
+    plot(sp$sense, sp$anti, pch=sp_pch, cex=0.8, col='blue', bg='cyan', axes = FALSE, xlab = '', ylab = '', 
          xlim = c(0,xmax), ylim = c(0,ymax))
-    abline(lm(sp$sense ~ 0 + sp$anti), col='blue')
+    abline(lm(sp$anti ~ 0 + sp$sense), col='blue')
     legend(legx, legy, legend_labels, col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
   }
   else
   {
-    plot(log10(data$anticounts), log10(data$sensecounts), pch=data_pch, cex=0.3, col="black", 
-         xlab='log(Antisense counts)', ylab='log(Sense counts)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
+    plot(log10(data$sensecounts), log10(data$anticounts), pch=data_pch, cex=0.3, col="black", 
+         xlab='log(Sense counts)', ylab='log(Antisense counts)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
     par(new=TRUE)
-    plot(log10(sp$anti), log10(sp$sense), pch=sp_pch, cex=0.8, col='blue', bg='cyan', axes = FALSE, xlab = '', ylab = '', 
+    plot(log10(sp$sense), log10(sp$anti), pch=sp_pch, cex=0.8, col='blue', bg='cyan', axes = FALSE, xlab = '', ylab = '', 
          xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
-    use <- is.finite(log10(sp$sense)) & is.finite(log10(sp$anti))
-    abline(lm(log10(sp$sense)[use] ~ log10(sp$anti)[use]), col='blue')
+    use <- is.finite(log10(sp$anti)) & is.finite(log10(sp$sense))
+    abline(lm(log10(sp$anti)[use] ~ log10(sp$sense)[use]), col='blue')
     legend(legx, legy, legend_labels, col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
   }
   title(main=plot_title)
@@ -139,29 +144,29 @@ plot_all <- function(d1,d2,sp1,sp2,label1,label2,name,xmax,ymax,aslog=TRUE,legx=
   
   if (aslog)
   {
-    plot(log10(d1$anticounts), log10(d1$sensecounts), pch=data_pch, cex=0.3, col="black", bg="black", 
-         xlab='log(Antisense counts)', ylab='log(Sense counts)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
+    plot(log10(d1$sensecounts), log10(d1$anticounts), pch=data_pch, cex=0.3, col="black", bg="black", 
+         xlab='log(Sense counts)', ylab='log(Antisense counts)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
     par(new=TRUE)
     use <- is.finite(log10(sp1$sense)) & is.finite(log10(sp1$anti))
-    abline(lm(log10(sp1$sense)[use] ~ log10(sp1$anti)[use]), col='black')
+    abline(lm(log10(sp1$anti)[use] ~ log10(sp1$sense)[use]), col='black')
     par(new=TRUE)
     use <- is.finite(log10(sp2$sense)) & is.finite(log10(sp2$anti))
-    abline(lm(log10(sp2$sense)[use] ~ log10(sp2$anti)[use]), col='red')
+    abline(lm(log10(sp2$anti)[use] ~ log10(sp2$sense)[use]), col='red')
     par(new=TRUE)
-    plot(log10(d2$anticounts), log10(d2$sensecounts), pch=data_pch, cex=0.3, col="red", axes = FALSE, xlab = '', ylab = '', xlim = c(0,log10(60000)), ylim = c(0,log10(5e+06)))
+    plot(log10(d2$sensecounts), log10(d2$anticounts), pch=data_pch, cex=0.3, col="red", axes = FALSE, xlab = '', ylab = '', xlim = c(0,log10(60000)), ylim = c(0,log10(5e+06)))
     
     legend(legx, legy, legend_labels, col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
   }
   else
   {
-    plot(d1$anticounts, d1$sensecounts, pch=data_pch, cex=0.5, col="black", bg="black", 
-         xlab='Antisense counts', ylab='Sense counts', xlim = c(0,xmax), ylim = c(0,ymax))
+    plot(d1$sensecounts, d1$anticounts, pch=data_pch, cex=0.5, col="black", bg="black", 
+         xlab='Sense counts', ylab='Antisense counts', xlim = c(0,xmax), ylim = c(0,ymax))
     par(new=TRUE)
-    abline(lm(sp1$sense ~ 0 + sp1$anti), col='black')
+    abline(lm(sp1$anti ~ 0 + sp1$sense), col='black')
     par(new=TRUE)
-    abline(lm(sp2$sense ~ 0 + sp2$anti), col='red')
+    abline(lm(sp2$anti ~ 0 + sp2$sense), col='red')
     par(new=TRUE)
-    plot(d2$anticounts, d2$sensecounts, pch=data_pch, cex=0.5, col="red", axes = FALSE, xlab = '', ylab = '', xlim = c(0,60000), ylim = c(0,5e+06))
+    plot(d2$sensecounts, d2$anticounts, pch=data_pch, cex=0.5, col="red", axes = FALSE, xlab = '', ylab = '', xlim = c(0,60000), ylim = c(0,5e+06))
     
     legend(legx, legy,legend_labels,  col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
   }
@@ -226,7 +231,7 @@ plotrep <- function(d, xlimit, ylimit, xlabel, ylabel, plottitle)
     par(new=FALSE)
     
     # first call also sets up x and y limits, axis labels and plot title
-    plot(log10(d$rep$anti), log10(d$rep$sense), pch=d$symbol, cex=0.5, col=d$colour,
+    plot(log10(d$rep$sense), log10(d$rep$anti), pch=d$symbol, cex=0.5, col=d$colour,
          xlab = xlabel, ylab = ylabel, xlim = xlimit, ylim = ylimit)
     title(main = plottitle)
     par(new=TRUE)
@@ -234,7 +239,7 @@ plotrep <- function(d, xlimit, ylimit, xlabel, ylabel, plottitle)
   else
   {
     # later calls do not reset labels, axes or title
-    plot(log10(d$rep$anti), log10(d$rep$sense), pch=d$symbol, cex=0.5, col=d$colour,
+    plot(log10(d$rep$sense), log10(d$rep$anti), pch=d$symbol, cex=0.5, col=d$colour,
          xlab = '', ylab = '', axes=FALSE, xlim = xlimit, ylim = ylimit)
     par(new=TRUE)
   }
@@ -358,8 +363,8 @@ calcratios <- function(paths, conditions, labels)
 calcratio <- function(condition, path)
 {
   rep <- load_spike_in_rep_direct(condition, path)
-  m <- lm(rep$sense ~ 0 + rep$anti)
-  return(1/m$coefficients)
+  m <- lm(rep$anti ~ 0 + rep$sense)
+  return(m$coefficients)
 }
 
 ##############################################################################################################
