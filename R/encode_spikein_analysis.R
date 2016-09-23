@@ -1,4 +1,4 @@
-source("/Users/kmourao/Documents/kmourao/km-antisense/R/analyse-spikeins.R")
+source("R/analyse-spikeins.R")
 
 #================================================================================
 # Constants
@@ -43,9 +43,8 @@ analyse <- function(start_dir,
                     fwdcol=7,
                     revcol=8)
 {
-  setwd(start_dir) 
-  groups = list.dirs(recursive=FALSE, full.names=FALSE)
-  ratios = lapply(groups, function(g) analyse_by_group(paste(start_dir,"/", g, sep=""), g,
+  groups = list.dirs(recursive=FALSE, full.names=FALSE, path=start_dir)
+  ratios = lapply(groups, function(g) analyse_by_group(file.path(start_dir,g), g,
                                                              fwdsuffix, revsuffix, skiplines, genecol, fwdcol, revcol))
   
   allratios = do.call("rbind",ratios)
@@ -58,7 +57,19 @@ analyse <- function(start_dir,
   text(bp$group, allratios[allratios$ratio %in% bp$out,]$ratio, 
        labels=allratios[allratios$ratio %in% bp$out,]$rep, pos=4)
   
-  plot_histogram(as.numeric(allratios$ratio), 0.012, 20) #"ENCODEhist.pdf")
+  sc = stripchart(as.numeric(allratios$ratio)~allratios$group, vertical=TRUE, method="jitter",
+                  col="brown3", pch=16)
+  
+  plot_histogram(as.numeric(allratios$ratio), 0.012, 50) #"ENCODEhist.pdf")
+  
+  bp = boxplot(as.numeric(allratios$ratio),data=allratios, main="Antisense:sense ratios", 
+               xlab="All Groups", ylab="Antisense:sense ratios", col="blue")
+  # label outliers in boxplot with replicate id. Left aligned.
+  text(bp$group, allratios[allratios$ratio %in% bp$out,]$ratio, 
+       labels=allratios[allratios$ratio %in% bp$out,]$rep, pos=4)
+  
+  sc = stripchart(as.numeric(allratios$ratio), vertical=TRUE, method="jitter",
+                  col="brown3", pch=16)
   
 }
 
@@ -83,11 +94,9 @@ analyse_by_group <- function(start_dir,
                              fwdcol=7,
                              revcol=8)
 {
-  setwd(start_dir)
-  
   # get files containing all the fwd and rev counts
-  fwdnames = list.files(pattern=paste("*", fwdsuffix, sep=""))
-  revnames = list.files(pattern=paste("*", revsuffix, sep=""))
+  fwdnames = list.files(path=start_dir, pattern=paste("*", fwdsuffix, sep=""), full.names=TRUE)
+  revnames = list.files(path=start_dir, pattern=paste("*", revsuffix, sep=""), full.names=TRUE)
   
   # return early if there are no counts files in this directory
   if (length(fwdnames) == 0)
@@ -99,9 +108,25 @@ analyse_by_group <- function(start_dir,
   # read in all the fwd and rev counts
   fwdlabel = paste(fwdsuffix, ".*", sep="")
   prefixes = lapply(fwdnames, function(x) { gsub(fwdlabel, "", x) })
+  prefixes = lapply(prefixes, function(x) { basename(x) })
   
   revfiles = lapply(revnames, read.table, "\t", header=TRUE, skip=skiplines, stringsAsFactors=FALSE)
   fwdfiles = lapply(fwdnames, read.table, "\t", header=TRUE, skip=skiplines, stringsAsFactors=FALSE)
+  
+  # check here that we have columns in each file matching gene/fwd/rev col - if not indicates a preprocessing problem
+  rcolcheck = unlist(lapply(revfiles, function(x) { ncol(x) >= max(genecol, fwdcol, revcol)}))
+  fcolcheck = unlist(lapply(fwdfiles, function(x) { ncol(x) >= max(genecol, fwdcol, revcol)}))
+  if (!all(rcolcheck) | (!all(fcolcheck)))
+  {
+    print("Some files do not have enough columns. These files will be ignored:")
+    print(fwdnames[!(fcolcheck)])
+    print(revnames[!(rcolcheck)])
+    
+    fwdfiles = fwdfiles[fcolcheck]
+    revfiles = revfiles[rcolcheck]
+    
+    prefixes = prefixes[fcolcheck & rcolcheck]
+  }
   
   # merge sense and antisense counts
   allcounts = mapply(merge_fwd_rev, fwdfiles, revfiles, genecol, fwdcol, revcol, SIMPLIFY=FALSE)
@@ -148,9 +173,9 @@ calc_ratio <- function(counts, prefix)
   }
   else
   {
-    plot_spikeins(counts, NULL, prefix, 10000, 2e+06)
-    m <- lm(counts$sense ~ 0 + counts$anti)
-    ratio = (1/m$coefficients)
+    plot_spikeins(counts, NULL, prefix, 2e+06, 2e+04)
+    m <- lm(counts$anti ~ 0 + counts$sense)
+    ratio = (m$coefficients)
   }
   return(ratio)
 }

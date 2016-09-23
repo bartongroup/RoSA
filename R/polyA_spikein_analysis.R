@@ -152,15 +152,15 @@ plot_boxplots(results)
 
 ## plot histogram of ratios for non-polyA (but include outlying polyA point to get scale right for comparisons)
 r <- as.numeric(results$ratio[results$experiment!="Arabidopsis_RNAMeth_polyA" | results$condition == "Col-03"])
-plot_histogram(r, 0.012, 14, "RatioDist.pdf")
+plot_histogram(r, 0.012, 20, "RatioDist.pdf")
 
 ## plot with curve fitted to to non-polyA data
 rcurve <- as.numeric(results$ratio[results$experiment!="Arabidopsis_RNAMeth_polyA"])
-plot_histogram(r, 0.012, 14, "RatioDistWithCurve.pdf", rcurve)
+plot_histogram(r, 0.012, 20, "RatioDistWithCurve.pdf", rcurve)
 
 ## plot all data + curve fitted to non-polyA data
 r <- as.numeric(results$ratio)
-plot_histogram(r, 0.012, 14, "RatioDistAll.pdf", rcurve)
+plot_histogram(r, 0.012, 20, "RatioDistAll.pdf", rcurve)
 
 
 # calc probabilities of Col1 and Col3 results
