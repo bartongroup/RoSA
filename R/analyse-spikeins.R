@@ -22,16 +22,16 @@ plot_spikeins <- function(sp, name, label, xmax, ymax, aslog=TRUE)
     plot(sp$sense, sp$anti, pch=21, cex=0.8, col='blue', bg='cyan', 
          xlab = 'Sense counts', 
          ylab = 'Antisense counts', xlim = c(0,xmax), ylim = c(0,ymax))
-    abline(lm(sp$anti ~ 0 + sp$sense), col='blue')
+    abline(lm(sp$anti[sp$anti!=0] ~ 0 + sp$sense[sp$anti!=0]), col='blue')
   }
   else
   {
     plot(log10(sp$sense+1), log10(sp$anti+1), pch=21, cex=0.8, col='blue', bg='cyan',
          xlab = 'log(Sense counts+1)',
          ylab = 'log(Antisense counts+1)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
-    use <- is.finite(log10(sp$sense+1)) & is.finite(log10(sp$anti+1))
+    use <- is.finite(log10(sp$sense)) & is.finite(log10(sp$anti))
     
-    model = lm(log10(sp$anti+1)[use] ~ log10(sp$sense+1)[use])
+    model = lm(log10(sp$anti)[use] ~ log10(sp$sense)[use])
     if (!is.na(model$coefficients[2])) # don't draw a line if gradient is infinite
     {
       abline(model, col='blue')
@@ -363,7 +363,7 @@ calcratios <- function(paths, conditions, labels)
 calcratio <- function(condition, path)
 {
   rep <- load_spike_in_rep_direct(condition, path)
-  m <- lm(rep$anti ~ 0 + rep$sense)
+  m <- lm(rep$anti[rep$anti!=0] ~ 0 + rep$sense[rep$anti!=0])
   return(m$coefficients)
 }
 

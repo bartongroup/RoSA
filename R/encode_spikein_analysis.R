@@ -1,4 +1,5 @@
 source("R/analyse-spikeins.R")
+library("easyGgplot2", lib.loc="~/Library/R/3.2/library")
 
 #================================================================================
 # Constants
@@ -45,9 +46,14 @@ analyse <- function(start_dir,
 {
   groups = list.dirs(recursive=FALSE, full.names=FALSE, path=start_dir)
   ratios = lapply(groups, function(g) analyse_by_group(file.path(start_dir,g), g,
-                                                             fwdsuffix, revsuffix, skiplines, genecol, fwdcol, revcol))
+                                                      fwdsuffix, revsuffix, skiplines, genecol, fwdcol, revcol))
   
   allratios = do.call("rbind",ratios)
+  
+  # remove everything with ratio = -1
+  # those are 0 sense count cases
+  allratios$ratio = as.numeric(allratios$ratio)
+  allratios = allratios[allratios$ratio != -1,]
   
   # boxplot the ratios
   par(mfrow=c(1,1))
@@ -60,6 +66,16 @@ analyse <- function(start_dir,
   sc = stripchart(as.numeric(allratios$ratio)~allratios$group, vertical=TRUE, method="jitter",
                   col="brown3", pch=16)
   
+  
+  plot <- ggplot2.stripchart(data=allratios, xName='group',yName='ratio',
+                     groupName='group',
+                     groupColors=c("black","black","black"),
+                     showLegend=FALSE,
+                     backgroundColor="white", xtitle="Group", ytitle="Antisense:sense ratios", 
+                     mainTitle="Antisense:sense ratios by group",
+                     addBoxplot=TRUE, boxplotFill=c("#E69F00", "#56B4E9","#E50EEE"))
+  print(plot)
+  
   plot_histogram(as.numeric(allratios$ratio), 0.012, 50) #"ENCODEhist.pdf")
   
   bp = boxplot(as.numeric(allratios$ratio),data=allratios, main="Antisense:sense ratios", 
@@ -68,9 +84,12 @@ analyse <- function(start_dir,
   text(bp$group, allratios[allratios$ratio %in% bp$out,]$ratio, 
        labels=allratios[allratios$ratio %in% bp$out,]$rep, pos=4)
   
-  sc = stripchart(as.numeric(allratios$ratio), vertical=TRUE, method="jitter",
-                  col="brown3", pch=16)
-  
+  plot <- ggplot2.stripchart(data=allratios$ratio,
+                             showLegend=FALSE,
+                             backgroundColor="white", xtitle="All groups", ytitle="Antisense:sense ratios", 
+                             mainTitle="Antisense:sense ratios",
+                             addBoxplot=TRUE, boxplotFill="#E69F00")
+  print(plot)
 }
 
 #================================================================================
@@ -169,12 +188,12 @@ calc_ratio <- function(counts, prefix)
   {
     #no sense counts (!) just output a warning
     print(paste("0 sense counts in sample:",prefix))
-    ratio = 0
+    ratio = -1
   }
   else
   {
     plot_spikeins(counts, NULL, prefix, 2e+06, 2e+04)
-    m <- lm(counts$anti ~ 0 + counts$sense)
+    m <- lm(counts$anti[counts$anti!=0] ~ 0 + counts$sense[counts$anti!=0])
     ratio = (m$coefficients)
   }
   return(ratio)
