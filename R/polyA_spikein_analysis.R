@@ -65,11 +65,11 @@ plot_spikeins(sp, "Colspikeins.pdf", "Col", 10000, 2e+06)
 plot_spikeins(vsp, "Virspikeins.pdf", "Vir", 2000, 2e+06)
 
 # Plot Col and Vir sense v antisense data + spike-ins
-plot_antisensedata_and_spikeins(col, sp, "Col", "Col.pdf", aslog=FALSE)
-plot_antisensedata_and_spikeins(vir, vsp, "Vir", "Vir.pdf", aslog=FALSE)
+plot_antisensedata_and_spikeins(col, sp, "Col", "Col.pdf", aslog=TRUE, legx=0, legy=4.5)
+plot_antisensedata_and_spikeins(vir, vsp, "Vir", "Vir.pdf", aslog=TRUE, legx=0, legy=4.5)
 
 # Plot all on one plot
-plot_all(col,vir,sp,vsp,"Col","Vir","ColVir.pdf",60000,5e+06)
+plot_all(col,vir,sp,vsp,"Col","Vir","ColVir.pdf",2e+07,5e+04)
 
 # Plot sense and antisense reads by spikein ordered by sense reads
 plot_spikeins_by_id(sp,vsp,"Col","Vir")
@@ -106,7 +106,7 @@ isfirst <- c('TRUE', 'FALSE', 'FALSE', 'FALSE', 'FALSE', 'FALSE')
 details <- data.frame(condition,symbol,colour,isfirst)
 details$rep <- lapply(details$condition, function(c) load_spike_in_rep(c, path, numlanes))
 
-plot_spikeins_by_rep(details, "ColVirSpikeins.pdf", 'Spike-ins by replicate (Col with Vir overlaid)',10000, 2e+06)
+plot_spikeins_by_rep(details, "ColVirSpikeins.pdf", 'Spike-ins by replicate (Col with Vir overlaid)',10000, 2e+03)
 
 ####################################################################################################
 ## Plot Ribo-minus spikeins by replicate (in this case directly from the replicates data)  

@@ -2,6 +2,8 @@
 # Code to create plots of spike-in data, and associated spliced reads data
 ##############################################################################################################
 
+library("LSD")
+
 ##############################################################################################################
 # plot_spikeins: Plot spike-in data sense/antisense and draw linear fit line
 # sp: spikein dataset
@@ -27,7 +29,7 @@ plot_spikeins <- function(sp, name, label, xmax, ymax, aslog=TRUE)
   else
   {
     plot(log10(sp$sense+1), log10(sp$anti+1), pch=21, cex=0.8, col='blue', bg='cyan',
-         xlab = 'log(Sense counts+1)',
+         xlab = 'log(Sense counts+1)', cex.lab=1.5, cex.axis=1.5,
          ylab = 'log(Antisense counts+1)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
     use <- is.finite(log10(sp$sense)) & is.finite(log10(sp$anti))
     
@@ -37,12 +39,14 @@ plot_spikeins <- function(sp, name, label, xmax, ymax, aslog=TRUE)
       abline(model, col='blue')
     }
   }
-  title(main=paste(label, " spike-ins: sense vs antisense counts", sep=""))
+  title(main=paste(label, " spike-ins: antisense vs sense counts", sep=""), cex.main=1.5)
   
   if (!is.null(name))
   {
     dev.off()
   }
+  
+  
 }
 
 ##############################################################################################################
@@ -53,7 +57,7 @@ plot_spikeins <- function(sp, name, label, xmax, ymax, aslog=TRUE)
 # name: name of pdf file to output to, must end in .pdf
 # aslog: plot as log/log if TRUE, else linear
 plot_antisensedata_and_spikeins <- function(data, sp, label, name, aslog=TRUE,
-                                            xmax = 60000, ymax=5e+06, legx=0, legy=0)
+                                            xmax = 2e+07, ymax=5e+04, legx=0, legy=0)
 {
   plot_title <- paste(label, ": sense vs antisense counts", sep="")
   
@@ -61,12 +65,18 @@ plot_antisensedata_and_spikeins <- function(data, sp, label, name, aslog=TRUE,
   data_pch <- 21  # symbol for data points - circle
   sp_pch <- 21    # symbol for spike-in points
   
-  # legend
-  legend_labels <- c(label, paste(label, " spike-ins", sep=""), paste(label, " spike-in ratio", sep=""))
-  legend_colours <- c("black", "blue", "blue")
-  legend_bg <- c(NA, "cyan", NA)
-  legend_lty <- c(NA, NA, 1)
-  legend_pch <- c(data_pch, sp_pch, NA)
+  # #legend
+  # legend_labels <- c(paste(label, " spliced reads", sep=""), paste(label, " spike-ins", sep=""), paste(label, " spike-in ratio", sep=""))
+  # legend_colours <- c("blue", "black", "black")
+  # legend_bg <- c(NA, "black", NA)
+  # legend_lty <- c(NA, NA, 1)
+  # legend_pch <- c(data_pch, sp_pch, NA)
+  
+  legend_labels <- c(paste(label, " spike-ins", sep=""), paste(label, " spike-in ratio", sep=""))
+  legend_colours <- c("black", "black")
+  legend_bg <- c("black", NA)
+  legend_lty <- c(NA, 1)
+  legend_pch <- c(sp_pch, NA)
   
   if (!aslog & legx==0 & legy==0)
   {
@@ -92,17 +102,44 @@ plot_antisensedata_and_spikeins <- function(data, sp, label, name, aslog=TRUE,
   }
   else
   {
-    plot(log10(data$sensecounts), log10(data$anticounts), pch=data_pch, cex=0.3, col="black", 
-         xlab='log(Sense counts)', ylab='log(Antisense counts)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
+#    plot(log10(data$sensecounts+1), log10(data$anticounts+1), pch=data_pch, cex=0.3, col="black", 
+#         xlab='log(Sense counts+1)', ylab='log(Antisense counts+1)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
+    heatscatter(log10(data$sensecounts/data$Length.x+1),log10(data$anticounts/data$Length.x+1),colpal="bl2gr2rd",
+                cor=FALSE,cex.main=1, xlim=c(0,log10(xmax/1000)), ylim=c(0,1.5),
+                xlab='log(Sense counts+1)', ylab='log(Antisense counts+1)', main='')
+    
     par(new=TRUE)
-    plot(log10(sp$sense), log10(sp$anti), pch=sp_pch, cex=0.8, col='blue', bg='cyan', axes = FALSE, xlab = '', ylab = '', 
-         xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
+    plot(log10(sp$sense/sp$length+1), log10(sp$anti/sp$length+1), pch=sp_pch, cex=1, col='white', bg='black', axes = FALSE, xlab = '', ylab = '', 
+         xlim = c(0,log10(xmax/1000)), ylim = c(0,1.5))
     use <- is.finite(log10(sp$anti)) & is.finite(log10(sp$sense))
-    abline(lm(log10(sp$anti)[use] ~ log10(sp$sense)[use]), col='blue')
+    abline(lm(log10(sp$anti[use]/sp$length[use]) ~ log10(sp$sense[use]/sp$length[use])), col='black')
     legend(legx, legy, legend_labels, col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
+    
+    
   }
   title(main=plot_title)
   dev.off()
+  
+  # plot an MA plot too
+  # M = log2(antisense) - log2(sense)
+  # A = 1/2 * (log2(antisense) + log2(sense))
+  
+  Msplice = log(data$anticounts+1) - log(data$sensecounts+1)
+  Asplice = 0.5 * (log(data$anticounts+1) + log(data$sensecounts)+1)
+  #Asplice = log(data$Length.x)
+  Mspikes = log(sp$anti + 1) - log(sp$sense+1)
+  Aspikes = 0.5 * (log(sp$anti+1) + log(sp$sense+1))
+  #Aspikes = log(sp$length)
+  
+  plot(Asplice, Msplice, pch=data_pch, cex=0.3, col="black",
+       xlim=c(0,14), ylim=c(-12,3))
+  heatscatter(Asplice,Msplice,colpal="bl2gr2rd",
+              cor=FALSE,cex.main=1, xlim=c(0,14), ylim=c(-12,3))
+  par(new=TRUE)
+  plot(Aspikes, Mspikes, pch=sp_pch, cex=1, col='black', bg='black',
+       xlim=c(0,14), ylim=c(-12,3))
+  
+  #plot(log10(data$Length.x), log10(data$anticounts+1))
 }
 
 ##############################################################################################################
@@ -144,8 +181,8 @@ plot_all <- function(d1,d2,sp1,sp2,label1,label2,name,xmax,ymax,aslog=TRUE,legx=
   
   if (aslog)
   {
-    plot(log10(d1$sensecounts), log10(d1$anticounts), pch=data_pch, cex=0.3, col="black", bg="black", 
-         xlab='log(Sense counts)', ylab='log(Antisense counts)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
+    plot(log10(d1$sensecounts+1), log10(d1$anticounts+1), pch=data_pch, cex=0.3, col="black", bg="black", 
+         xlab='log(Sense counts+1)', ylab='log(Antisense counts+1)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
     par(new=TRUE)
     use <- is.finite(log10(sp1$sense)) & is.finite(log10(sp1$anti))
     abline(lm(log10(sp1$anti)[use] ~ log10(sp1$sense)[use]), col='black')
@@ -153,7 +190,8 @@ plot_all <- function(d1,d2,sp1,sp2,label1,label2,name,xmax,ymax,aslog=TRUE,legx=
     use <- is.finite(log10(sp2$sense)) & is.finite(log10(sp2$anti))
     abline(lm(log10(sp2$anti)[use] ~ log10(sp2$sense)[use]), col='red')
     par(new=TRUE)
-    plot(log10(d2$sensecounts), log10(d2$anticounts), pch=data_pch, cex=0.3, col="red", axes = FALSE, xlab = '', ylab = '', xlim = c(0,log10(60000)), ylim = c(0,log10(5e+06)))
+    plot(log10(d2$sensecounts+1), log10(d2$anticounts+1), pch=data_pch, cex=0.3, col="red", axes = FALSE, 
+         xlab = '', ylab = '', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
     
     legend(legx, legy, legend_labels, col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
   }
@@ -166,7 +204,8 @@ plot_all <- function(d1,d2,sp1,sp2,label1,label2,name,xmax,ymax,aslog=TRUE,legx=
     par(new=TRUE)
     abline(lm(sp2$anti ~ 0 + sp2$sense), col='red')
     par(new=TRUE)
-    plot(d2$sensecounts, d2$anticounts, pch=data_pch, cex=0.5, col="red", axes = FALSE, xlab = '', ylab = '', xlim = c(0,60000), ylim = c(0,5e+06))
+    plot(d2$sensecounts, d2$anticounts, pch=data_pch, cex=0.5, col="red", axes = FALSE, 
+         xlab = '', ylab = '', xlim = c(0,60000), ylim = c(0,3e+06))
     
     legend(legx, legy,legend_labels,  col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
   }
@@ -406,4 +445,83 @@ fitnormal <- function(data, hist, xmax)
   yfit<-dnorm(xfit, mean=mean(data), sd=sd(data)) 
   yfit <- yfit*diff(hist$mids[1:2])*length(data) 
   lines(xfit, yfit, col="black", lwd=2)
+}
+
+
+
+##############################################################################################################
+# plot_spikeins: Plot spike-in data sense/antisense and draw linear fit line
+# sp: spikein dataset
+# name: name of file to output to, must end in .pdf
+# label: label for this dataset e.g. Col, Vir
+# xmax: max extent of x axis
+# ymax: max extent of y axis
+# aslog: TRUE if plotting log/log else FALSE
+plot_spikeins_talk <- function(sp, name, label, xmax, ymax, aslog=TRUE)
+{
+  if (!is.null(name))
+  {
+    pdf(file=name,width=7,height=6)
+  }
+  
+  thecol = 'blue'
+  thebg = 'cyan'
+  thepch = 21
+  if ((label=='Col-01-') | (label=="Vir-1-"))
+  {
+    thecol='black'
+    thebg='black'
+    thepch = 17
+    
+  }
+  if ((label=='Col-03-') | (label=="Vir-3-"))
+  {
+    thecol='red'
+    thebg='red'
+    thepch = 8
+    
+  }
+  
+  
+  if (!aslog)
+  {
+    plot(sp$sense, sp$anti, pch=21, cex=0.8, col='blue', bg='cyan', 
+         xlab = 'Sense counts', 
+         ylab = 'Antisense counts', xlim = c(0,xmax), ylim = c(0,ymax))
+    abline(lm(sp$anti[sp$anti!=0] ~ 0 + sp$sense[sp$anti!=0]), col='blue')
+  }
+  else
+  {
+    plot(log10(sp$sense+1), log10(sp$anti+1), pch=thepch, cex=0.8, col=thecol, bg=thebg,
+         xlab = 'log(Sense counts+1)', cex.lab=1.5, cex.axis=1.5,
+         ylab = 'log(Antisense counts+1)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
+    
+    use <- is.finite(log10(sp$sense)) & is.finite(log10(sp$anti))
+    
+    model = lm(log10(sp$anti)[use] ~ log10(sp$sense)[use])
+    if (!is.na(model$coefficients[2])) # don't draw a line if gradient is infinite
+    {
+      abline(model, col=thecol)
+    }
+  }
+  #title(main=paste(label, " spike-ins: antisense vs sense counts", sep=""), cex.main=1.5)
+  if (label=='Col-03-') 
+  {
+    legend(x=0.3,y=4, legend=c("Col-01", "Col-02", "Col-03"), col=c('black', 'blue', 'red'), pch=c(17,21,8), bty='n', cex=1.25,
+           title="Replicates:", y.intersp=1.5)
+    title(main="Col condition: antisense vs sense counts", cex.main=1.5)
+  }
+  else if (label=="Vir-3-")
+  {
+    legend(x=0.3,y=4, legend=c("Vir-1", "Vir-2", "Vir-3"), col=c('black', 'blue', 'red'), pch=c(17,21,8), bty='n', cex=1.25,
+           title="Replicates:", y.intersp=1.5)
+    title(main="Vir condition: antisense vs sense counts", cex.main=1.5)
+  }
+  
+  if (!is.null(name))
+  {
+    dev.off()
+  }
+  
+  
 }
