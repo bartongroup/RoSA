@@ -1,4 +1,4 @@
-source("analyse-spikeins.R")
+source("R/analyse-spikeins.R")
 library("easyGgplot2", lib.loc="~/Library/R/3.2/library")
 
 #================================================================================
@@ -59,23 +59,35 @@ analyse <- function(start_dir,
   
   # boxplot the ratios
   par(mfrow=c(1,1), new=FALSE)
-  bp = boxplot(as.numeric(allratios$ratio)~allratios$group,data=allratios, main="Antisense:sense ratios", 
-               xlab="Group", ylab="Antisense:sense ratios", col="blue")
+  bp = boxplot(as.numeric(log10(allratios$ratio))~allratios$group,data=allratios, main="Antisense:sense ratios", 
+               xlab="Group", ylab="Log10(Antisense:sense ratios)", col=c("blue","purple","lightblue","royalblue"))
   # label outliers in boxplot with replicate id. Left aligned.
-  text(bp$group, allratios[allratios$ratio %in% bp$out,]$ratio, 
-       labels=allratios[allratios$ratio %in% bp$out,]$rep, pos=4)
+  #text(bp$group, allratios[allratios$ratio %in% bp$out,]$ratio, 
+  #     labels=allratios[allratios$ratio %in% bp$out,]$rep, pos=4)
   
-  sc = stripchart(as.numeric(allratios$ratio)~allratios$group, vertical=TRUE, method="jitter",
-                  col="brown3", pch=16)
+#  sc = stripchart(as.numeric(allratios$ratio)~allratios$group, vertical=TRUE, method="jitter",
+    #              col="brown3", pch=16)
   
+
   
   plot <- ggplot2.stripchart(data=allratios, xName='group',yName='ratio',
                      groupName='group',
                      groupColors=c("black","black","black","black"),
                      showLegend=FALSE,
-                     backgroundColor="white", xtitle="Group", ytitle="Antisense:sense ratios",
+                     backgroundColor="white", xtitle="", ytitle="Antisense:sense ratios",
                      mainTitle="Antisense:sense ratios by group",
                      addBoxplot=TRUE, boxplotFill=c("#E69F00", "#56B4E9","#E50EEE", "#56B4E9"))
+  print(plot)
+  
+  logdata = allratios
+  logdata$ratio = log10(logdata$ratio)
+  plot <- ggplot2.stripchart(data=logdata, xName='group',yName='ratio',
+                             groupName='group',
+                             groupColors=c("black","black","black","black"),
+                             showLegend=FALSE,
+                             backgroundColor="white", xtitle="", ytitle=expression('log'[10]*'(Antisense:sense ratios)'),
+                             mainTitle="Antisense:sense ratios by group",
+                             addBoxplot=TRUE, boxplotFill=c("darkorange2","darkorange2","darkorange2","darkorange2"))
   print(plot)
 
   rcurve <- as.numeric(allratios$ratio[allratios$ratio < 0.002])
@@ -90,13 +102,40 @@ analyse <- function(start_dir,
   text(bp$group, allratios[allratios$ratio %in% bp$out,]$ratio, 
        labels=allratios[allratios$ratio %in% bp$out,]$rep, pos=4)
   
-  plot <- ggplot2.stripchart(data=allratios$ratio,
+  plot <- ggplot2.stripchart(data=log10(allratios$ratio),
                              showLegend=FALSE,
                              backgroundColor="white", xtitle="All groups", ytitle="Antisense:sense ratios", 
                              mainTitle="Antisense:sense ratios",
                              addBoxplot=TRUE, boxplotFill="#E69F00")
   print(plot)
   
+}
+
+recurse_dirs <- function (start_dir, 
+             fwdsuffix="fwdcounts.txt", 
+             revsuffix="revcounts.txt")
+{
+  # get the directories
+  dirlist = list.dirs(path=start_dir, recursive=TRUE, full.names=FALSE)
+  
+  # put them in a dataframe, calculate the lengths of each path and sort 
+  # allows us to process lowest level dirs first, so that higher
+  # level dirs will have access to aggregated data from lower levels
+  dirs = data.frame(dirlist,stringsAsFactors = FALSE)
+  dirs$length = nchar(dirs[[1]])
+  dirs = dirs[with(dirs, order(-length, dirlist)), ]
+  dirs = dirs[dirs$length > 0,]
+  
+  ratios = list()
+  for (d in dirs$dirlist)
+  {
+    # name the group as the bottom level directory
+    group = tail(strsplit(d, "/")[[1]],1)
+    path = paste(start_dir, d, sep="")
+    ratios[[d]] = analyse_by_group(path, group, fwdsuffix, revsuffix)
+  }
+  
+  return(ratios)
 }
 
 #================================================================================
@@ -162,39 +201,25 @@ analyse_by_group <- function(start_dir,
   ratios = data.frame("rep"=as.character(prefixes), "ratio"=0, "group"=group, stringsAsFactors=FALSE)
   
   # calc ratios and plot scatters of sense vs antisense
-  par(mfrow=c(1,1))
-  ratios$ratio = mapply(calc_ratio_talk, allcounts, prefixes, SIMPLIFY=FALSE)
-  #par(mfrow=c(3,2))
-  #ratios$ratio = mapply(calc_ratio, allcounts, prefixes, SIMPLIFY=FALSE)
+  #par(mfrow=c(1,1))
+  #ratios$ratio = mapply(calc_ratio_talk, allcounts, prefixes, SIMPLIFY=FALSE)
+  par(mfrow=c(3,2))
+  ratios$ratio = mapply(calc_ratio, allcounts, prefixes, SIMPLIFY=FALSE)
   
   return(ratios)
 }
 
-#================================================================================
-#' Merge forward and reverse spike-in counts into one dataframe
-#' 
-#' @param fwdfile The file containing the forward strand counts
-#' @param revfile The file containing the reverse strand counts
-#' @param genecol Column number of gene id column
-#' @param fwdcol Column number of (fwd) sense counts column
-#' @param revcol Column number of (rev) antisense counts column
-#'
-merge_fwd_rev <- function(fwdfile, revfile, genecol, lengthcol, fwdcol, revcol)
-{
-  counts = data.frame(fwdfile[genecol], fwdfile[lengthcol], fwdfile[fwdcol], revfile[revcol])
-  names(counts) = c(GENEID, LENGTH, SENSE, ANTI)
-  return(counts)
-}
+
 
 #================================================================================
-#' Calculate antisense:sense spikein ratios for a sample, 
+#' Calculate antisense:sense spikein ratios for a sample,
 #' printing scatterplot with fitted line of sense vs antisense counts
 #'
 #'@param counts The counts for the spikeins with sense and anti columns
 #'@param prefix The sample id
 calc_ratio <- function(counts, prefix)
 {
-  if (sum(counts$sense) == 0)
+  if (sum(counts$sense, na.rm=TRUE) == 0)
   {
     #no sense counts (!) just output a warning
     print(paste("0 sense counts in sample:",prefix))
@@ -202,40 +227,40 @@ calc_ratio <- function(counts, prefix)
   }
   else
   {
-    plot_spikeins(counts, NULL, prefix, 3e+06, 7e+03, aslog=FALSE)
-    m <- lm(counts$anti[counts$anti!=0] ~ 0 + counts$sense[counts$anti!=0])
-    ratio = (m$coefficients)
-  }
-  return(ratio)
-}
-
-#================================================================================
-#' Calculate antisense:sense spikein ratios for a sample, 
-#' printing scatterplot with fitted line of sense vs antisense counts
-#'
-#'@param counts The counts for the spikeins with sense and anti columns
-#'@param prefix The sample id
-calc_ratio_talk <- function(counts, prefix)
-{
-  if (sum(counts$sense) == 0)
-  {
-    #no sense counts (!) just output a warning
-    print(paste("0 sense counts in sample:",prefix))
-    ratio = -1
-  }
-  else
-  {
-    plot_spikeins_talk(counts, NULL, prefix, 2e+06, 2e+04)
-    par(new=TRUE)
-    
-    if ((prefix=="Col-03-"))
-    {
-      par(new=FALSE)      
-    }
-    
     #plot_spikeins(counts, NULL, prefix, 3e+06, 7e+03, aslog=FALSE)
     m <- lm(counts$anti[counts$anti!=0] ~ 0 + counts$sense[counts$anti!=0])
     ratio = (m$coefficients)
   }
   return(ratio)
 }
+
+#' #================================================================================
+#' #' Calculate antisense:sense spikein ratios for a sample, 
+#' #' printing scatterplot with fitted line of sense vs antisense counts
+#' #'
+#' #'@param counts The counts for the spikeins with sense and anti columns
+#' #'@param prefix The sample id
+#' calc_ratio_talk <- function(counts, prefix)
+#' {
+#'   if (sum(counts$sense) == 0)
+#'   {
+#'     #no sense counts (!) just output a warning
+#'     print(paste("0 sense counts in sample:",prefix))
+#'     ratio = -1
+#'   }
+#'   else
+#'   {
+#'     plot_spikeins_talk(counts, NULL, prefix, 2e+06, 2e+04)
+#'     par(new=TRUE)
+#'     
+#'     if ((prefix=="Col-03-"))
+#'     {
+#'       par(new=FALSE)      
+#'     }
+#'     
+#'     #plot_spikeins(counts, NULL, prefix, 3e+06, 7e+03, aslog=FALSE)
+#'     m <- lm(counts$anti[counts$anti!=0] ~ 0 + counts$sense[counts$anti!=0])
+#'     ratio = (m$coefficients)
+#'   }
+#'   return(ratio)
+#' }

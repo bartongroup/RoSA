@@ -64,25 +64,25 @@ hist(log(spike_ratios["fwdratio"][sapply(spike_ratios["fwdratio"], is.finite)]),
 
 }
 
-# getting annotation data
-t <- read.table("~/Documents/Arabidopsis_RNAMeth_polyA/genes_fixed.gtf", sep = "\t", quote="\"")
-# extract geneids
-t$gene_id <- sapply(strsplit(sapply(strsplit(as.character(t$V9), "gene_id "), `[`, 2), ";"), "[", 1)
-# group by geneid to get strand per geneid and inner join to get strands onto ratios2 table
-t2 <- unique(t[c("V7", "gene_id")])
-colnames(t2) = c("strand","Geneid")
-ratios2 <- merge(ratios2, t2, by="Geneid")
-
-outlierpos <- ratios2[ratios2$fwdratio > 1,] # but this produces far fewer than in earlier ofinterest calcs??
-
-# take ratios before merge with results to do this calc
-outlierpos <- ratios[ratios$fwdratio > 1 & ratios$rev.anti > 100,]
-outlierpos <- outlierpos[order(-outlierpos$fwdratio),]
-
-
-# to get full set of what we want:
-extranti <- ratios2[ratios2$fwdratio > 1 | ratios2$revratio > 1,]
-extranti<- extranti[complete.cases(extranti[,8]),] # get rid of nans
-wrongfstrand <- extranti[extranti$fwdratio > 1 & extranti$strand=="+",]
-wrongrstrand <- extranti[extranti$revratio > 1 & extranti$strand=="-",]
-
+# # getting annotation data
+# t <- read.table("~/Documents/Arabidopsis_RNAMeth_polyA/genes_fixed.gtf", sep = "\t", quote="\"")
+# # extract geneids
+# t$gene_id <- sapply(strsplit(sapply(strsplit(as.character(t$V9), "gene_id "), `[`, 2), ";"), "[", 1)
+# # group by geneid to get strand per geneid and inner join to get strands onto ratios2 table
+# t2 <- unique(t[c("V7", "gene_id")])
+# colnames(t2) = c("strand","Geneid")
+# ratios2 <- merge(ratios2, t2, by="Geneid")
+# 
+# outlierpos <- ratios2[ratios2$fwdratio > 1,] # but this produces far fewer than in earlier ofinterest calcs??
+# 
+# # take ratios before merge with results to do this calc
+# outlierpos <- ratios[ratios$fwdratio > 1 & ratios$rev.anti > 100,]
+# outlierpos <- outlierpos[order(-outlierpos$fwdratio),]
+# 
+# 
+# # to get full set of what we want:
+# extranti <- ratios2[ratios2$fwdratio > 1 | ratios2$revratio > 1,]
+# extranti<- extranti[complete.cases(extranti[,8]),] # get rid of nans
+# wrongfstrand <- extranti[extranti$fwdratio > 1 & extranti$strand=="+",]
+# wrongrstrand <- extranti[extranti$revratio > 1 & extranti$strand=="-",]
+# 

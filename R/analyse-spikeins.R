@@ -5,144 +5,6 @@
 library("LSD")
 
 ##############################################################################################################
-# plot_spikeins: Plot spike-in data sense/antisense and draw linear fit line
-# sp: spikein dataset
-# name: name of file to output to, must end in .pdf
-# label: label for this dataset e.g. Col, Vir
-# xmax: max extent of x axis
-# ymax: max extent of y axis
-# aslog: TRUE if plotting log/log else FALSE
-plot_spikeins <- function(sp, name, label, xmax, ymax, aslog=TRUE)
-{
-  if (!is.null(name))
-  {
-    pdf(file=name,width=7,height=6)
-  }
-  
-  if (!aslog)
-  {
-    plot(sp$sense, sp$anti, pch=21, cex=0.8, col='blue', bg='cyan', 
-         xlab = 'Sense counts', 
-         ylab = 'Antisense counts', xlim = c(0,xmax), ylim = c(0,ymax))
-    abline(lm(sp$anti[sp$anti!=0] ~ 0 + sp$sense[sp$anti!=0]), col='blue')
-  }
-  else
-  {
-    plot(log10(sp$sense+1), log10(sp$anti+1), pch=21, cex=0.8, col='blue', bg='cyan',
-         xlab = 'log(Sense counts+1)', cex.lab=1.5, cex.axis=1.5,
-         ylab = 'log(Antisense counts+1)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
-    use <- is.finite(log10(sp$sense)) & is.finite(log10(sp$anti))
-    
-    model = lm(log10(sp$anti)[use] ~ log10(sp$sense)[use])
-    if (!is.na(model$coefficients[2])) # don't draw a line if gradient is infinite
-    {
-      abline(model, col='blue')
-    }
-  }
-  title(main=paste(label, " spike-ins: antisense vs sense counts", sep=""), cex.main=1.5)
-  
-  if (!is.null(name))
-  {
-    dev.off()
-  }
-  
-  
-}
-
-##############################################################################################################
-# plot_antisensedata_and_spikeins: plot data and spikeins on same graph, sense vs antisense
-# data: full dataset of read counts
-# sp: spike in counts
-# label: condition or replicate name for graph labels
-# name: name of pdf file to output to, must end in .pdf
-# aslog: plot as log/log if TRUE, else linear
-plot_antisensedata_and_spikeins <- function(data, sp, label, name, aslog=TRUE,
-                                            xmax = 2e+07, ymax=5e+04, legx=0, legy=0)
-{
-  plot_title <- paste(label, ": sense vs antisense counts", sep="")
-  
-  # symbols
-  data_pch <- 21  # symbol for data points - circle
-  sp_pch <- 21    # symbol for spike-in points
-  
-  # #legend
-  # legend_labels <- c(paste(label, " spliced reads", sep=""), paste(label, " spike-ins", sep=""), paste(label, " spike-in ratio", sep=""))
-  # legend_colours <- c("blue", "black", "black")
-  # legend_bg <- c(NA, "black", NA)
-  # legend_lty <- c(NA, NA, 1)
-  # legend_pch <- c(data_pch, sp_pch, NA)
-  
-  legend_labels <- c(paste(label, " spike-ins", sep=""), paste(label, " spike-in ratio", sep=""))
-  legend_colours <- c("black", "black")
-  legend_bg <- c("black", NA)
-  legend_lty <- c(NA, 1)
-  legend_pch <- c(sp_pch, NA)
-  
-  if (!aslog & legx==0 & legy==0)
-  {
-    legx = 0.6 * xmax
-    legy = 0.4 * ymax
-  }
-  else if (legx==0 & legy==0)
-  {
-    legx = 0.6 * log10(xmax)
-    legy = 0.4 * log10(ymax)
-  }
-  
-  pdf(file=name,width=7,height=6)
-  if (!aslog)
-  {
-    plot(data$sensecounts, data$anticounts, pch=data_pch, cex=0.5, col="black", 
-         xlab='Sense counts', ylab='Antisense counts', xlim = c(0,xmax), ylim = c(0,ymax))
-    par(new=TRUE)
-    plot(sp$sense, sp$anti, pch=sp_pch, cex=0.8, col='blue', bg='cyan', axes = FALSE, xlab = '', ylab = '', 
-         xlim = c(0,xmax), ylim = c(0,ymax))
-    abline(lm(sp$anti ~ 0 + sp$sense), col='blue')
-    legend(legx, legy, legend_labels, col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
-  }
-  else
-  {
-#    plot(log10(data$sensecounts+1), log10(data$anticounts+1), pch=data_pch, cex=0.3, col="black", 
-#         xlab='log(Sense counts+1)', ylab='log(Antisense counts+1)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
-    heatscatter(log10(data$sensecounts/data$Length.x+1),log10(data$anticounts/data$Length.x+1),colpal="bl2gr2rd",
-                cor=FALSE,cex.main=1, xlim=c(0,log10(xmax/1000)), ylim=c(0,1.5),
-                xlab='log(Sense counts+1)', ylab='log(Antisense counts+1)', main='')
-    
-    par(new=TRUE)
-    plot(log10(sp$sense/sp$length+1), log10(sp$anti/sp$length+1), pch=sp_pch, cex=1, col='white', bg='black', axes = FALSE, xlab = '', ylab = '', 
-         xlim = c(0,log10(xmax/1000)), ylim = c(0,1.5))
-    use <- is.finite(log10(sp$anti)) & is.finite(log10(sp$sense))
-    abline(lm(log10(sp$anti[use]/sp$length[use]) ~ log10(sp$sense[use]/sp$length[use])), col='black')
-    legend(legx, legy, legend_labels, col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
-    
-    
-  }
-  title(main=plot_title)
-  dev.off()
-  
-  # plot an MA plot too
-  # M = log2(antisense) - log2(sense)
-  # A = 1/2 * (log2(antisense) + log2(sense))
-  
-  Msplice = log(data$anticounts+1) - log(data$sensecounts+1)
-  Asplice = 0.5 * (log(data$anticounts+1) + log(data$sensecounts)+1)
-  #Asplice = log(data$Length.x)
-  Mspikes = log(sp$anti + 1) - log(sp$sense+1)
-  Aspikes = 0.5 * (log(sp$anti+1) + log(sp$sense+1))
-  #Aspikes = log(sp$length)
-  
-  plot(Asplice, Msplice, pch=data_pch, cex=0.3, col="black",
-       xlim=c(0,14), ylim=c(-12,3))
-  heatscatter(Asplice,Msplice,colpal="bl2gr2rd",
-              cor=FALSE,cex.main=1, xlim=c(0,14), ylim=c(-12,3))
-  par(new=TRUE)
-  plot(Aspikes, Mspikes, pch=sp_pch, cex=1, col='black', bg='black',
-       xlim=c(0,14), ylim=c(-12,3))
-  
-  #plot(log10(data$Length.x), log10(data$anticounts+1))
-}
-
-##############################################################################################################
 # plot_all: Plot 2 datsets sense vs antisense + spike-in ratios
 # d1,d2: read counts data
 # sp1,sp2: corresponding spikein counts
@@ -459,22 +321,19 @@ fitnormal <- function(data, hist, xmax)
 # aslog: TRUE if plotting log/log else FALSE
 plot_spikeins_talk <- function(sp, name, label, xmax, ymax, aslog=TRUE)
 {
-  if (!is.null(name))
-  {
-    pdf(file=name,width=7,height=6)
-  }
   
-  thecol = 'blue'
-  thebg = 'cyan'
+  
+  thecol = 'darkblue'
+  thebg = 'royalblue1'
   thepch = 21
-  if ((label=='Col-01-') | (label=="Vir-1-"))
+  if ((label=='WT1') | (label=="Mutant1"))
   {
     thecol='black'
     thebg='black'
     thepch = 17
     
   }
-  if ((label=='Col-03-') | (label=="Vir-3-"))
+  if ((label=='WT3') | (label=="Mutant3"))
   {
     thecol='red'
     thebg='red'
@@ -485,16 +344,16 @@ plot_spikeins_talk <- function(sp, name, label, xmax, ymax, aslog=TRUE)
   
   if (!aslog)
   {
-    plot(sp$sense, sp$anti, pch=21, cex=0.8, col='blue', bg='cyan', 
+    plot(sp$sense, sp$anti, pch=21, cex=0.8, col=thecol, bg=thebg, 
          xlab = 'Sense counts', 
          ylab = 'Antisense counts', xlim = c(0,xmax), ylim = c(0,ymax))
-    abline(lm(sp$anti[sp$anti!=0] ~ 0 + sp$sense[sp$anti!=0]), col='blue')
+    abline(lm(sp$anti[sp$anti!=0] ~ 0 + sp$sense[sp$anti!=0]), col=thecol)
   }
   else
   {
     plot(log10(sp$sense+1), log10(sp$anti+1), pch=thepch, cex=0.8, col=thecol, bg=thebg,
-         xlab = 'log(Sense counts+1)', cex.lab=1.5, cex.axis=1.5,
-         ylab = 'log(Antisense counts+1)', xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
+         xlab = expression('log'[10]*'(Sense counts+1)'), cex.lab=1, cex.axis=1,
+         ylab = expression('log'[10]*'(Antisense counts+1)'), xlim = c(0,log10(xmax)), ylim = c(0,log10(ymax)))
     
     use <- is.finite(log10(sp$sense)) & is.finite(log10(sp$anti))
     
@@ -505,22 +364,19 @@ plot_spikeins_talk <- function(sp, name, label, xmax, ymax, aslog=TRUE)
     }
   }
   #title(main=paste(label, " spike-ins: antisense vs sense counts", sep=""), cex.main=1.5)
-  if (label=='Col-03-') 
+  if (label=='WT3') 
   {
-    legend(x=0.3,y=4, legend=c("Col-01", "Col-02", "Col-03"), col=c('black', 'blue', 'red'), pch=c(17,21,8), bty='n', cex=1.25,
-           title="Replicates:", y.intersp=1.5)
-    title(main="Col condition: antisense vs sense counts", cex.main=1.5)
+    legend(x=0.3,y=4, legend=c("WT1", "WT2", "WT3"), col=c('black', 'darkblue', 'red'), pt.bg=c('black', 'royalblue1', 'red'), bg=c('black', 'royalblue1', 'red'),
+           pch=c(17,21,8), bty='n', cex=1.25,
+           title="Replicates:", y.intersp=1.1)
+    title(main="WT condition: antisense vs sense counts", cex.main=1.2, line=-1.2)
   }
-  else if (label=="Vir-3-")
+  else if (label=="Mutant3")
   {
-    legend(x=0.3,y=4, legend=c("Vir-1", "Vir-2", "Vir-3"), col=c('black', 'blue', 'red'), pch=c(17,21,8), bty='n', cex=1.25,
-           title="Replicates:", y.intersp=1.5)
-    title(main="Vir condition: antisense vs sense counts", cex.main=1.5)
-  }
-  
-  if (!is.null(name))
-  {
-    dev.off()
+    legend(x=0.3,y=4, legend=c("Mutant1", "Mutant2", "Mutant3"), col=c('black', 'darkblue', 'red'), pt.bg=c('black', 'royalblue1', 'red'),bg=c('black', 'royalblue1', 'red'),
+           pch=c(17,21,8), bty='n', cex=1.25,
+           title="Replicates:", y.intersp=1.1)
+    title(main="Mutant condition: antisense vs sense counts", cex.main=1.2, line=-1.2)
   }
   
   
