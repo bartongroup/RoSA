@@ -31,24 +31,24 @@ TPMRATIO = "tpmratio"
 #' }
 #' @param spikein_sense A matrix of integers, where each column c corresponds to a replicate, 
 #' and each row r corresponds to a spike in. Each entry is the sense counts for the r-th spike-in for replicate c.
-#' The c-th column corresponds to the c-th entry in data.
+#' The c-th column corresponds to the c-th entry in data. If there is no spike-in data, set to NULL.
 #' @param spikein_anti A matrix of integers, where each column c corresponds to a replicate, 
 #' and each row r corresponds to a spike in. Each entry is the antisense counts for the r-th spike-in for replicate c.
-#' The c-th column corresponds to the c-th entry in data.
+#' The c-th column corresponds to the c-th entry in data. If there is no spike-in data, set to NULL.
 #' @param splice_sense A matrix of integers, where each column c corresponds to a replicate, 
 #' and each row r corresponds to a gene. Each entry is the spliced sense counts (may be 0 or NA) for the r-th 
-#' gene for replicate c. The c-th column corresponds to the c-th entry in data.
+#' gene for replicate c. The c-th column corresponds to the c-th entry in data. If there is no spliced reads data, set to NULL.
 #' @param splice_anti A matrix of integers, where each column c corresponds to a replicate, 
 #' and each row r corresponds to a gene. Each entry is the spliced sense counts (may be 0 or NA) for the r-th 
-#' gene for replicate c. The c-th column corresponds to the c-th entry in data.
+#' gene for replicate c. The c-th column corresponds to the c-th entry in data. If there is no spliced reads data, set to NULL.
 #' @param spike_ids A dataframe containing spike-in ids in column 'Geneid'
 #' @param splice_ids A dataframe containing gene ids in column 'Geneid'
 #' @param spike_lengths A dataframe containing spike-in lengths in column 'length'
 #' @param splice_lengths A dataframe containing gene lengths in column 'length'
-#' @param groups A character array listing the condition corresponding to each replicate. E.g. if replicates in data
-#' are WT1,WT2,WT3,Mutant1,Mutant2,Mutant3 then setting groups=c("WT","WT","WT","Mutant","Mutant","Mutant") will analyse
-#' replicates in two groups, entry/columns 1-3 as WT and entry/columns 4-6 as Mutant. Alternatively groups=c("WT1","WT2","WT3","Mutant1","Mutant2","Mutant3") 
-#' will cause RoSA to analyse each replicate separately.
+#' @param groups A character array listing each replicate by its position in data, and the spikein and 
+#' spliced reads matrices. E.g. if replicates in data are in the order WT1,WT2,WT3,Mutant1,Mutant2,Mutant3 then 
+#' groups should be set to c("WT1","WT2","WT3","Mutant1","Mutant2","Mutant3"). In future this parameter
+#' will allow replicates to be combined in the analysis.
 #' @param resultdir Full path to directory where plots should be output
 #' @param global Use only spike-in ratios to calculate correction (Default \code{FALSE})
 #' @param xmin Minimum x-value for plots of antisense vssense counts (Default \code{1e-12})
@@ -103,6 +103,10 @@ rosa <- function(data, spikein_sense, spikein_anti, splice_sense, splice_anti, s
       paramcheck = list("error"=TRUE, "message"=paste(resultdir, 
                           " does not exist on the filesystem. Please supply *the full path* of an existing directory for results."))
     }
+    if (is.null(splice_sense) & is.null(spikein_sense))
+    {
+      paramcheck = list("error"=TRUE, "message"="Both splice counts and spike-in counts are NULL. At least one must be non-NULL.")
+    }
   }
   
   if (paramcheck$error)
@@ -112,14 +116,35 @@ rosa <- function(data, spikein_sense, spikein_anti, splice_sense, splice_anti, s
   
   message("Calculating ratios")
   
-  # total counts
-  totalcounts = colSums(rbind(colSums(spikein_sense),colSums(spikein_anti),
-                              colSums(splice_sense,na.rm=TRUE),colSums(splice_anti,na.rm=TRUE)))
   
-  # calc ratios
-  spikeratios = calculate_ratios(spikein_sense, spikein_anti, spike_ids, spike_lengths, groups, totalcounts)
-  spliceratios = calculate_ratios(splice_sense, splice_anti, splice_ids, splice_lengths, groups, totalcounts)
-  
+  if (is.null(spikein_sense))
+  {
+    # total counts
+    totalcounts = colSums(rbind(colSums(splice_sense,na.rm=TRUE),colSums(splice_anti,na.rm=TRUE)))
+    
+    # calc ratios
+    spikeratios = NULL
+    spliceratios = calculate_ratios(splice_sense, splice_anti, splice_ids, splice_lengths, groups, totalcounts)
+  }
+  else if (is.null(splice_sense))
+  {
+    # total counts
+    totalcounts = colSums(rbind(colSums(spikein_sense),colSums(spikein_anti)))
+    
+    # calc ratios
+    spliceratios = NULL
+    spikeratios = calculate_ratios(spikein_sense, spikein_anti, spike_ids, spike_lengths, groups, totalcounts)
+  }
+  else
+  {
+    # total counts
+    totalcounts = colSums(rbind(colSums(spikein_sense),colSums(spikein_anti),
+                                colSums(splice_sense,na.rm=TRUE),colSums(splice_anti,na.rm=TRUE)))
+    # calc ratios
+    spikeratios = calculate_ratios(spikein_sense, spikein_anti, spike_ids, spike_lengths, groups, totalcounts)
+    spliceratios = calculate_ratios(splice_sense, splice_anti, splice_ids, splice_lengths, groups, totalcounts)
+  }
+
   grouplist = split(seq_along(groups), groups)
   newdata = data[order(unlist(grouplist))]
   newtotalcounts = totalcounts[order(unlist(grouplist))]
@@ -133,10 +158,18 @@ rosa <- function(data, spikein_sense, spikein_anti, splice_sense, splice_anti, s
   grouplist = split(seq_along(groups), groups)
   newdata = data[order(unlist(grouplist))]
   
-  plot_data_and_spikein_ratios(spikeratios, list(1,newdata), title="Original", "original data.pdf", resultdir,
+  if (is.null(spikein_sense))
+  {
+    useratios = spliceratios 
+  }
+  else
+  {
+    useratios = spikeratios
+  }
+  plot_data_and_spikein_ratios(useratios, list(1,newdata), title="Original", "original data.pdf", resultdir,
                                xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax, legx=legendx, legy=legendy, aslog=TRUE, show_spikeins=FALSE)
   
-  plot_data_and_spikein_ratios(spikeratios, list(1,corrected_data), title="Corrected", "corrected data.pdf", resultdir,
+  plot_data_and_spikein_ratios(useratios, list(1,corrected_data), title="Corrected", "corrected data.pdf", resultdir,
                                xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax, legx=legendx, legy=legendy, aslog=TRUE, show_spikeins=FALSE)
   
   # plot spikeins sense v antisense and draw best fit line
@@ -144,8 +177,11 @@ rosa <- function(data, spikein_sense, spikein_anti, splice_sense, splice_anti, s
   # plot_spikein_ratios(spikeratios, "Spike-in.pdf", xmax=2e6, ymax=1e4, aslog=TRUE)
   
   # Plot spliced sense v antisense data + spike-ins
-  plot_data_and_spikein_ratios(spikeratios, spliceratios, title="Spike-ins overlaid on spliced\n", "data and spikeins.pdf", resultdir,
+  if (!is.null(spikein_sense))
+  {
+    plot_data_and_spikein_ratios(spikeratios, spliceratios, title="Spike-ins overlaid on spliced\n", "data and spikeins.pdf", resultdir,
                                xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax, legx=legendx, legy=legendy, aslog=TRUE)
+  }
   
   message("Finished")
   return(list(corrected_data,spikeratios,spliceratios))
@@ -196,8 +232,18 @@ calculate_ratios<-function(sensecounts, anticounts, ids, lengths, groups, totalc
 #'
 make_correction <- function(data, spikeratios, spliceratios, totalcounts, global=FALSE)
 {
-  by_rep_ratios = spikeratios[[1]]$ratio
-  if (global)
+  # if we don't have spike-in data, use the splices data
+  if (is.null(spikeratios))
+  {
+    by_rep_ratios = spliceratios[[1]]$ratio
+  }
+  else
+  {
+    by_rep_ratios = spikeratios[[1]]$ratio
+  }
+  
+  # if we don't have splices data, just apply the spike-in ratios globally
+  if (global | is.null(spliceratios))
   {
     result <- lapply(1:length(data), function(i) insert_global_ratio(data[[i]], by_rep_ratios[[i]]))
   }

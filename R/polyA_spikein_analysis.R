@@ -175,6 +175,10 @@ rosa_result = rosa(data,sensesps, antisps, sensesplices, antisplices,
                   sps[[1]][1], splices[[1]][1], sps[[1]][2], splices[[1]][5], groups, 
                   resultdir="/Users/kmourao/Documents/kmourao/km-antisense/results", global=FALSE)
 
+rosa_result = rosa(data,NULL, NULL, sensesplices, antisplices,
+                   NULL, splices[[1]][1], NULL, splices[[1]][5], groups, 
+                   resultdir="/Users/kmourao/Documents/kmourao/km-antisense/results", global=FALSE)
+
 ####################################################################################################
 ## Plot Col spikeins by replicate, aggregated from the lanes data (because that's what I've got)
 
