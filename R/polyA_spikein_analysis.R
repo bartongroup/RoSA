@@ -161,41 +161,19 @@ splices <- get_splices("~/Documents/Arabidopsis_RNAMeth_polyA/antisense_counting
 # add the lengths and full set of gene ids via outer join - this adds a load of NAs but ensures the dataframes are all the same size
 splices = lapply(1:6, function(z) merge(x=splices[[z]], y=lengths, by.x="gene_id", by.y="Geneid", all.y=TRUE))
 groups = c("WT1","WT2","WT3","Mutant1","Mutant2","Mutant3")
-#groups = c("Col-01","Col-02","Col-03","Vir-1","Vir-2","Vir-3")
 
 # sort
 splices = lapply(1:6, function(x) splices[[x]][order(splices[[x]]$gene_id),])
 
-# munge data into format expected by analyse TODO add functions to do this if data is different
+# munge data into format expected by rosa TODO add functions to do this if data is different
 sensesps = matrix(unlist(lapply(sps, `[`, 3)),ncol=6,byrow=FALSE)
 antisps = matrix(unlist(lapply(sps, `[`, 4)),ncol=6,byrow=FALSE)
 sensesplices = matrix(unlist(lapply(splices, `[`, 3)),ncol=6,byrow=FALSE)
 antisplices = matrix(unlist(lapply(splices, `[`, 2)),ncol=6,byrow=FALSE)
 
-#datasense = matrix(unlist(lapply(data, `[`, 2)),ncol=6,byrow=FALSE)
-#dataanti = matrix(unlist(lapply(data, `[`, 3)),ncol=6,byrow=FALSE)
-
 rosa_result = rosa(data,sensesps, antisps, sensesplices, antisplices,
-                  sps[[1]][1], splices[[1]][1], sps[[1]][2], splices[[1]][5], groups, global=FALSE)
-
-corrected_data = rosa_result[[1]]
-ratios = rosa_result[[2]]
-spliceratios = rosa_result[[3]]
-
-grouplist = split(seq_along(groups), groups)
-newdata = data[order(unlist(grouplist))]
-plot_data_and_spikein_ratios(ratios, list(1,newdata), title="Original", "original data.pdf", 
-                             xmin=1e-12, ymin=1e-12, xmax=1e-2, ymax=1e-4, legx=-12, legy=0, aslog=TRUE, show_spikeins=FALSE)
-
-plot_data_and_spikein_ratios(ratios, list(1,corrected_data), title="Corrected", "corrected data.pdf", 
-                             xmin=1e-12, ymin=1e-12, xmax=1e-2, ymax=1e-4, legx=-12, legy=0, aslog=TRUE, show_spikeins=FALSE)
-
-# plot Col and Vir spikeins sense v antisense and draw best fit line
-plot_spikein_ratios(ratios, "Spike-in.pdf", xmax=2e6, ymax=1e4, aslog=TRUE)
-
-# Plot Col and Vir spliced sense v antisense data + spike-ins
-plot_data_and_spikein_ratios(ratios, spliceratios, title="Spike-ins overlaid on spliced\n", "data and spikeins.pdf", 
-                             xmin=1e-12, ymin=1e-12, xmax=1e-2, ymax=1e-4, legx=-12, legy=-5, aslog=TRUE)
+                  sps[[1]][1], splices[[1]][1], sps[[1]][2], splices[[1]][5], groups, 
+                  resultdir="/Users/kmourao/Documents/kmourao/km-antisense/results", global=FALSE)
 
 ####################################################################################################
 ## Plot Col spikeins by replicate, aggregated from the lanes data (because that's what I've got)

@@ -10,15 +10,70 @@ TPMANTI = "tpmanti"
 TPMRATIO = "tpmratio"
 
 ##############################################################################################################
-#' Analyse antisense data
+#' Analyse RNA-Seq counts data for spurious antisense
 #' 
-#' Count and group parameters for this function can be obtained from an edgeR DGEList object d, via d$counts and d$samples$group
+#' RoSA calculates the incidence of spurious antisense counts in RNA-Seq data, using either (or both) antisense and
+#' sense counts from spike-ins and spliced reads at known splice junctions.
+#' 
+#' This function was written with the intention of obtaining count and group parameters from an 
+#' edgeR DGEList object d, via d$counts and d$samples$group. Input data from other sources may need to be adjusted
+#' to match the required format.
 #'
-#' export
+#' @param data A list of dataframes (1 for each replicate) containing sense and antisense counts by gene. 
+#' Each dataframe should have columns: 
+#' \itemize{
+#' \item "Geneid" (the id of each gene)
+#' \item "sense" (raw sense counts for each gene)
+#' \item "anti" (raw antisense counts for each gene)
+#' \item "tpmsense" (normalised sense counts (TPM))
+#' \item "tpmanti" (normalised antisense counts (TPM))
+#' \item "length" (length of gene)
+#' }
+#' @param spikein_sense A matrix of integers, where each column c corresponds to a replicate, 
+#' and each row r corresponds to a spike in. Each entry is the sense counts for the r-th spike-in for replicate c.
+#' The c-th column corresponds to the c-th entry in data.
+#' @param spikein_anti A matrix of integers, where each column c corresponds to a replicate, 
+#' and each row r corresponds to a spike in. Each entry is the antisense counts for the r-th spike-in for replicate c.
+#' The c-th column corresponds to the c-th entry in data.
+#' @param splice_sense A matrix of integers, where each column c corresponds to a replicate, 
+#' and each row r corresponds to a gene. Each entry is the spliced sense counts (may be 0 or NA) for the r-th 
+#' gene for replicate c. The c-th column corresponds to the c-th entry in data.
+#' @param splice_anti A matrix of integers, where each column c corresponds to a replicate, 
+#' and each row r corresponds to a gene. Each entry is the spliced sense counts (may be 0 or NA) for the r-th 
+#' gene for replicate c. The c-th column corresponds to the c-th entry in data.
+#' @param spike_ids A dataframe containing spike-in ids in column 'Geneid'
+#' @param splice_ids A dataframe containing gene ids in column 'Geneid'
+#' @param spike_lengths A dataframe containing spike-in lengths in column 'length'
+#' @param splice_lengths A dataframe containing gene lengths in column 'length'
+#' @param groups A character array listing the condition corresponding to each replicate. E.g. if replicates in data
+#' are WT1,WT2,WT3,Mutant1,Mutant2,Mutant3 then setting groups=c("WT","WT","WT","Mutant","Mutant","Mutant") will analyse
+#' replicates in two groups, entry/columns 1-3 as WT and entry/columns 4-6 as Mutant. Alternatively groups=c("WT1","WT2","WT3","Mutant1","Mutant2","Mutant3") 
+#' will cause RoSA to analyse each replicate separately.
+#' @param resultdir Full path to directory where plots should be output
+#' @param global Use only spike-in ratios to calculate correction (Default \code{FALSE})
+#' @param xmin Minimum x-value for plots of antisense vssense counts (Default \code{1e-12})
+#' @param xmax Maximum x-value for plots of antisense vs sense counts (Default \code{1e-2})
+#' @param ymin Minimum y-value for plots of antisense vs sense counts (Default \code{1e-12})
+#' @param ymax Maximum y-value for plots of antisense vs sense counts (Default \code{1e-4})
+#' @param legendx Location of left side of legend (Default \code{-12})
+#' @param legendy Location of top of legend (Default \code{0})
+#' @return Returns a list with entries:
+#' \itemize{
+#' \item corrected_data (original data with corrected counts values),
+#' \item spikeratios (ratios for the spike-in data), and 
+#' \item spliceratios (ratios for the spliced reads data).
+#' }
+#' Each of spikeratios and spliceratios consists of a list with two entries: the first entry is a dataframe 
+#' containing the global spike-in/spliced ratio of antisense:sense, and the standard deviation of the residuals 
+#' for the associated linear model, for each condition listed in groups; the second entry is a list of dataframes,
+#' one for each condition listed in groups, containing counts and ratios for each spike-in/gene.
+#' @export
 rosa <- function(data, spikein_sense, spikein_anti, splice_sense, splice_anti, spike_ids, splice_ids, 
-                 spike_lengths, splice_lengths, groups, global=FALSE)
+                 spike_lengths, splice_lengths, groups, resultdir, global=FALSE, xmin=1e-12, xmax=1e-2, ymin=1e-12, ymax=1e-4,
+                 legendx=-12, legendy=0)
 {
   # validate
+  message("Validating parameters")
   paramcheck = validate_ratio_data(spikein_sense, spikein_anti, spike_ids, spike_lengths, groups, "Spike-ins")
   if (paramcheck$error)
   {
@@ -34,18 +89,34 @@ rosa <- function(data, spikein_sense, spikein_anti, splice_sense, splice_anti, s
   }
   else
   {
-    paramcheck = validate_data(data, groups, splice_ids)
+    paramcheck = validate_data(data, groups)
   }
+  
+  if (paramcheck$error)
+  {
+    stop(paramcheck$message)
+  }
+  else
+  {
+    if (!dir.exists(resultdir))
+    {
+      paramcheck = list("error"=TRUE, "message"=paste(resultdir, 
+                          " does not exist on the filesystem. Please supply *the full path* of an existing directory for results."))
+    }
+  }
+  
   if (paramcheck$error)
   {
     stop(paramcheck$message)
   }
   
+  message("Calculating ratios")
+  
   # total counts
-  totalcounts = colSums(rbind(colSums(spikein_sense),colSums(spikein_anti),colSums(splice_sense,na.rm=TRUE),colSums(splice_anti,na.rm=TRUE)))
+  totalcounts = colSums(rbind(colSums(spikein_sense),colSums(spikein_anti),
+                              colSums(splice_sense,na.rm=TRUE),colSums(splice_anti,na.rm=TRUE)))
   
   # calc ratios
-  # sensesplices end up with NAs at e.g. position 18719 which then screws up everything
   spikeratios = calculate_ratios(spikein_sense, spikein_anti, spike_ids, spike_lengths, groups, totalcounts)
   spliceratios = calculate_ratios(splice_sense, splice_anti, splice_ids, splice_lengths, groups, totalcounts)
   
@@ -54,8 +125,29 @@ rosa <- function(data, spikein_sense, spikein_anti, splice_sense, splice_anti, s
   newtotalcounts = totalcounts[order(unlist(grouplist))]
   
   # calc correction
+  message("Calculating antisense correction")
   corrected_data = make_correction(newdata, spikeratios, spliceratios, totalcounts, global)
   
+  # make plots
+  message("Making plots...")
+  grouplist = split(seq_along(groups), groups)
+  newdata = data[order(unlist(grouplist))]
+  
+  plot_data_and_spikein_ratios(spikeratios, list(1,newdata), title="Original", "original data.pdf", resultdir,
+                               xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax, legx=legendx, legy=legendy, aslog=TRUE, show_spikeins=FALSE)
+  
+  plot_data_and_spikein_ratios(spikeratios, list(1,corrected_data), title="Corrected", "corrected data.pdf", resultdir,
+                               xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax, legx=legendx, legy=legendy, aslog=TRUE, show_spikeins=FALSE)
+  
+  # plot spikeins sense v antisense and draw best fit line
+  # not sure how useful this is
+  # plot_spikein_ratios(spikeratios, "Spike-in.pdf", xmax=2e6, ymax=1e4, aslog=TRUE)
+  
+  # Plot spliced sense v antisense data + spike-ins
+  plot_data_and_spikein_ratios(spikeratios, spliceratios, title="Spike-ins overlaid on spliced\n", "data and spikeins.pdf", resultdir,
+                               xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax, legx=legendx, legy=legendy, aslog=TRUE)
+  
+  message("Finished")
   return(list(corrected_data,spikeratios,spliceratios))
 }
 
@@ -77,14 +169,13 @@ rosa <- function(data, spikein_sense, spikein_anti, splice_sense, splice_anti, s
 calculate_ratios<-function(sensecounts, anticounts, ids, lengths, groups, totalcounts)
 {
   # merge across groups
-  # TODO this is not working - split + seq_along is changing the group order when mutant/wt
-  # but we need something like this to group replicates together when we want to
   grouplist = split(seq_along(groups), groups)
   sensegroups = sapply(grouplist, function(x) rowSums(sensecounts[, x, drop = FALSE]))
   antigroups = sapply(grouplist, function(x) rowSums(anticounts[, x, drop = FALSE]))
   
   # merge sense and antisense counts
-  allcounts = lapply(1:ncol(sensegroups), function(x) makecountsdata(sensegroups[,x],antigroups[,x],ids, lengths, totalcounts[x]))
+  allcounts = lapply(1:ncol(sensegroups), function(x) 
+                makecountsdata(sensegroups[,x],antigroups[,x],ids, lengths, totalcounts[x]))
   
   # calculate ratios
   # set up holder for ratio results
@@ -190,12 +281,14 @@ plot_single_spikein_group<- function(sp, name, label, xmax, ymax, aslog=TRUE)
 #' Geneid = id of gene/spikein, sense = sense counts, anti = antisense counts, ratio = ratio of antisense to sense counts
 #' @param data a list of dataframes where each dataframe contains sense and antisense counts for one group, in columns
 #' Geneid, sense, anti, ratio. Entry x in the list must correspond to entry x in ratiodata$counts
-#' @param name name of file to output to, must end in .pdf. For each plot the name will be appended to the group id for the plot.
+#' @param name name of file to output to, must end in .pdf. For each plot the name will be appended 
+#' to the group id for the plot.
+#' @param resultdir Full path to an existing directory where plots will be output to
 #' @param xmax max extent of x axis
 #' @param ymax max extent of y axis
 #' @param aslog TRUE if plotting log/log else FALSE
 #' @param show_spikeins TRUE if spikeins are also to be plotted
-plot_data_and_spikein_ratios <- function(ratiodata, data, title, name, xmin = 1e-12, ymin=1e-12, xmax=0, ymax=0,
+plot_data_and_spikein_ratios <- function(ratiodata, data, title, name, resultdir, xmin = 1e-12, ymin=1e-12, xmax=0, ymax=0,
                                          legx=0, legy=0, aslog=TRUE, show_spikeins=TRUE)
 {
   groups = ratiodata[[1]]
@@ -208,7 +301,7 @@ plot_data_and_spikein_ratios <- function(ratiodata, data, title, name, xmin = 1e
     splices[[match(x,groups$rep)]], 
     x, 
     title,
-    paste(x, name, sep=" "), 
+    file.path(resultdir,paste(x, name, sep=" ")),
     xmin, 
     ymin, 
     xmax,
@@ -504,6 +597,11 @@ apply_correction <- function(d, correction)
 validate_ratio_data<-function(sensecounts, anticounts, ids, lengths, groups, dataset)
 {
   warnmsg <- list()
+  
+  if (is.null(sensecounts) | (is.null(anticounts)))
+  {
+    return(list("error"=FALSE,"message"="!"))
+  }
 
   if (nrow(sensecounts) != nrow(anticounts))
   {
@@ -536,7 +634,7 @@ validate_ratio_data<-function(sensecounts, anticounts, ids, lengths, groups, dat
   return(list("error"=FALSE, "message"="!"))
 }
 
-validate_data <- function(data, groups, ids)
+validate_data <- function(data, groups)
 {
   # data list has as many elements as there are groups
   if (length(data) != length(groups))
