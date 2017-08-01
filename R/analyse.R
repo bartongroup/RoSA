@@ -88,10 +88,11 @@ calculate_ratios<-function(sensecounts, anticounts, ids, lengths, groups, totalc
   
   # calculate ratios
   # set up holder for ratio results
-  ratios = data.frame("rep"=as.character(names(grouplist)), "ratio"=0, stringsAsFactors=FALSE)
+  ratios = data.frame("rep"=as.character(names(grouplist)), ratio="0", rmse="0", stringsAsFactors=FALSE)
   
   # calc ratios of sense vs antisense
   ratios$ratio = mapply(calc_ratio, allcounts, as.list(names(grouplist)), SIMPLIFY=FALSE)
+  ratios$rmse = mapply(calc_rmse, allcounts, as.list(names(grouplist)), SIMPLIFY=FALSE)
   
   # remove any stray NAs
   allcounts = lapply(1:length(allcounts), function(x) allcounts[[x]][complete.cases(allcounts[[x]]),])
@@ -216,7 +217,8 @@ plot_data_and_spikein_ratios <- function(ratiodata, data, title, name, xmin = 1e
     legy, 
     aslog,
     show_spikeins,
-    list(ratiodata[[1]]$ratio[[match(x,groups$rep)]], data[[1]]$ratio[[match(x,groups$rep)]])))
+    list(ratiodata[[1]]$ratio[[match(x,groups$rep)]], data[[1]]$ratio[[match(x,groups$rep)]]),
+    list(ratiodata[[1]]$rmse[[match(x,groups$rep)]], data[[1]]$rmse[[match(x,groups$rep)]])))
 }
 
 ##############################################################################################################
@@ -241,7 +243,8 @@ plot_single_data_and_spikeins <- function(sp,
                                           legy=0, 
                                           aslog=TRUE,
                                           show_spikeins=TRUE,
-                                          summary_ratios=NULL)
+                                          summary_ratios=NULL,
+                                          summary_rmse=NULL)
 {
   # deal with log of zero values
   if (aslog & (xmax==0))
@@ -306,13 +309,13 @@ plot_single_data_and_spikeins <- function(sp,
       temp <-legend("bottomright", bty="n", legend = c(" "," ", " "), text.width=legwidth)
       text(temp$rect$left + temp$rect$w, temp$text$y, 
            c(parse(text=paste("R", "^2", ": ",format(round(summary(m)$adj.r.squared,digits=2),nsmall=2))),
-             paste("Spike-in ratio: ",format(round(summary_ratios[[1]],digits=4),nsmall=4), "SD: ", 0.001),
-             paste("Splices ratio: ",format(round(summary_ratios[[2]],digits=4),nsmall=4), "SD: ", 0.001)), 
-             pos=2, cex=0.85)
+             paste("Spike-in ratio: ",format(round(summary_ratios[[1]],digits=4),nsmall=4), "SD: ", format(round(summary_rmse[[1]],digits=8),nsmall=8)),
+             paste("Splices ratio: ",format(round(summary_ratios[[2]],digits=4),nsmall=4), "SD: ", format(round(summary_rmse[[2]],digits=8),nsmall=8))), 
+             pos=2, cex=1)
     }
     else
     {
-      legend("bottomright", bty="n", legend=parse(text=paste("R", "^2", ": ",format(round(summary(m)$adj.r.squared, digits=2),nsmall=2))), cex=0.85)
+      legend("bottomright", bty="n", legend=parse(text=paste("R", "^2", ": ",format(round(summary(m)$adj.r.squared, digits=2),nsmall=2))), cex=1)
     }
 
     if (show_spikeins)
@@ -397,6 +400,30 @@ calc_ratio <- function(counts, prefix)
     ratio = (m$coefficients)[[1]]
   }
   return(ratio)
+}
+
+#' Calculate the standard deviation of the residuals
+#' @param counts dataframe containing TPM sense and antisense counts
+#' @param prefix sample name
+#' @return RMSE for the linear regression model calculated for antisense vs sense counts
+calc_rmse <- function(counts, prefix)
+{
+  if (sum(counts$sense, na.rm=TRUE) == 0)
+  {
+    #no sense counts (!) just output a warning
+    print(paste("0 sense counts in sample:",prefix)) 
+    ratio = -1
+  }
+  else
+  {
+    use <- is.finite(log10(counts$tpmanti)) & is.finite(log10(counts$tpmsense))
+    m <- lm(counts$tpmanti[use] ~ 0 + counts$tpmsense[use])
+    stderr = coef(summary(m))[,2]
+    RSS <- c(crossprod(m$residuals))
+    MSE <- RSS / length(m$residuals)
+    RMSE <- sqrt(MSE)
+  }
+  return(RMSE)
 }
 
 calc_tpm <- function(counts, name, totalcounts)

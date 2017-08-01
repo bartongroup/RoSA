@@ -17,8 +17,7 @@ Depends:
 Imports:
     utils,
     stats,
-    ggplot2,
-    easyGgplot2
+    LSD
 Suggests:
     testthat,
     knitr,
