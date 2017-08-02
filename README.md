@@ -59,6 +59,10 @@ p.build_antisense_gtf_gene_only([(p.featureType.exon,outfile.gtf)])
 ```
 * generate sense and antisense counts of reads at splice junctions
 
+## Known issues
+
+Installing pysam via pip can result in a broken installation: https://github.com/pysam-developers/pysam/issues/475
+Workaround: use bioconda instead.
 
 ## Contact information
 
