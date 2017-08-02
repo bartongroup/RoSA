@@ -13,26 +13,10 @@ Once RoSA has an estimate of the spurious antisense, expressed as a ratio of ant
 
 ## Pre-requisites to running RoSA
 ### Data
-RoSA depends on having a stranded RNA-Seq dataset with spike-ins. Several different read counts are needed:
+RoSA depends on having a stranded RNA-Seq dataset. Ideally the data will also have spikeins, but these are not essential as RoSA can also estimate the spurious antisense in your data from looking at spliced reads at known splice junctions.
 
-- Full read counts
-- Antisense counts (via a python script to create an antisense annotation)
-- Spike-in counts (by aligning the reads data to the spike-ins, and generating read counts for each strand)
-- Spliced read counts (via a python script to filter “sense-strand” spliced reads)
-
-Name each read counts file according to its strand and library as follows: 
-\<library name\>fwdcounts.txt and \<library name>revcounts.txt.
-The counts files should contain the following tab-delimited columns:
-- Geneid
-- Chromosome
-- Start
-- End
-- Strand
-- Length
-- Forward counts
-- Reverse counts
-
-Each first row of the file should be a header row, with column names (the names themselves do not matter). Note that if featureCounts is used, it outputs an additional line at the top of the file which must be removed before inputting to RoSA.
+### Annotation
+The data should have already been aligned to an annotation. RoSA will need the gff or gtf file for the annotation, in order to create an antisense annotation which can then be used to generate antisense counts, and to determine where known splice junctions occur.
 
 ### Dependencies
 
@@ -47,7 +31,27 @@ install.packages("LSD")
 
 ## How to use RoSA
 
-RoSA (currently) is a combination of an R package and some python scripts. The R package takes as input 
+RoSA (currently) is a combination of an R package and some python scripts. The R package takes as input datasets containing several different read counts:
+
+- Full read counts by gene
+- Antisense counts by gene (via a python script to create an antisense annotation)
+At least one of:
+- Spike-in sense and antisense counts (by aligning the reads data to the spike-ins, and generating read counts for each strand)
+- Spliced sense and antisense counts (via a python script to filter “sense-strand” spliced reads)
+
+Name each read counts file according to its strand and library as follows: 
+\<library name\>fwdcounts.txt and \<library name>revcounts.txt.
+The counts files should contain the following tab-delimited columns:
+- Geneid
+- Chromosome
+- Start
+- End
+- Strand
+- Length
+- Forward counts
+- Reverse counts
+
+Each first row of the file should be a header row, with column names (the names themselves do not matter). Note that if featureCounts is used, it outputs an additional line at the top of the file which must be removed before inputting to RoSA.
 
 ## Contact information
 
