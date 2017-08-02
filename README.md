@@ -20,12 +20,17 @@ The data should have already been aligned to an annotation. RoSA will need the g
 
 ### Dependencies
 
-The package depends on one third-party package, LSD, which you may need to install first, 
+The R package depends on one third-party package, LSD, which you may need to install first, 
 if it is not present already:
 
 ```
 install.packages("LSD")
 ```
+
+The python scripts depend on:
+* scipy
+* numpy
+* pandas
 
 ## Installation
 
@@ -34,24 +39,26 @@ install.packages("LSD")
 RoSA (currently) is a combination of an R package and some python scripts. The R package takes as input datasets containing several different read counts:
 
 - Full read counts by gene
-- Antisense counts by gene (via a python script to create an antisense annotation)
+- Antisense counts by gene (via RoSA's python script to create an antisense annotation)
 At least one of:
 - Spike-in sense and antisense counts (by aligning the reads data to the spike-ins, and generating read counts for each strand)
-- Spliced sense and antisense counts (via a python script to filter “sense-strand” spliced reads)
+- Spliced sense and antisense counts (via RoSA's python script to filter “sense-strand” spliced reads)
 
-Name each read counts file according to its strand and library as follows: 
-\<library name\>fwdcounts.txt and \<library name>revcounts.txt.
-The counts files should contain the following tab-delimited columns:
-- Geneid
-- Chromosome
-- Start
-- End
-- Strand
-- Length
-- Forward counts
-- Reverse counts
+The python scripts can be used to 
+* create an antisense annotation to use to generate antisense read counts via a counting tool such as featureCounts:
+```
+from viewseq.gffParser import GffParser
+p = GffParser("filename.gff")
+p.build_antisense_gtf_gene_only([(p.featureType.exon,outfiel.gtf)])
+```
+or
+```
+from viewseq.gtfParser import GtfParser
+p = GtfParser("filename.gtf")
+p.build_antisense_gtf_gene_only([(p.featureType.exon,outfile.gtf)])
+```
+* generate sense and antisense counts of reads at splice junctions
 
-Each first row of the file should be a header row, with column names (the names themselves do not matter). Note that if featureCounts is used, it outputs an additional line at the top of the file which must be removed before inputting to RoSA.
 
 ## Contact information
 
