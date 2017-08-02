@@ -1,3 +1,18 @@
+# This file is part of RoSA.
+# 
+# RoSA is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# RoSA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with RoSA  If not, see <http://www.gnu.org/licenses/>.
+
 #================================================================================
 # Constants
 GENEID = "Geneid"
@@ -201,10 +216,10 @@ rosa <- function(data, spikein_sense, spikein_anti, splice_sense, splice_anti, s
 #' @param totalcounts The total read counts for each source
 #' @return the antisense:sense ratios for each group
 #' 
-#' export
 calculate_ratios<-function(sensecounts, anticounts, ids, lengths, groups, totalcounts)
 {
-  # merge across groups
+  # merge across groups - note not currently working as intended, ordering is not 
+  # being changed to correspond to grouping
   grouplist = split(seq_along(groups), groups)
   sensegroups = sapply(grouplist, function(x) rowSums(sensecounts[, x, drop = FALSE]))
   antigroups = sapply(grouplist, function(x) rowSums(anticounts[, x, drop = FALSE]))
