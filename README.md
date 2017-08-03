@@ -45,10 +45,10 @@ The python script to find and count spliced antisense and sense reads also depen
 RoSA (currently) is a combination of an R package and some python scripts. The R package takes as input datasets containing several different read counts:
 
 - Full read counts by gene
-- Antisense counts by gene (via RoSA's python script to create an antisense annotation, and then read counting as usual)
+- Antisense counts by gene (via RoSA's python script (*makeannotation.py*) to create an antisense annotation, and then read counting as usual)
 At least one of:
 - Spike-in sense and antisense counts (by aligning the reads data to the spike-ins, and generating read counts for each strand)
-- Spliced sense and antisense counts (via RoSA's python script to filter “sense-strand” spliced reads)
+- Spliced sense and antisense counts (via RoSA's python script (*antisense.py*) to filter spliced reads which occur at known splice junctions)
 
 The python scripts can be used to 
 * create an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts via your favourite read counting tool (e.g. [featureCounts](http://subread.sourceforge.net)):
