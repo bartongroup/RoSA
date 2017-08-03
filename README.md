@@ -53,15 +53,7 @@ At least one of:
 The python scripts can be used to 
 * create an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts via your favourite read counting tool (e.g. [featureCounts](http://subread.sourceforge.net)):
 ```
-from viewseq.gffParser import GffParser
-p = GffParser("inputannotation.gff")
-p.build_antisense_gtf_gene_only([(p.featureType.exon,"outfile.gtf")])
-```
-or
-```
-from viewseq.gtfParser import GtfParser
-p = GtfParser("inputannotation.gtf")
-p.build_antisense_gtf_gene_only([(p.featureType.exon,"outfile.gtf")])
+python makeannotation.py -a <annotation file as gff or gtf> -o <output filename without file extension>
 ```
 * generate sense and antisense counts of reads at splice junctions. The script takes the standard annotation (as gtf/gff) and corresponding alignment (as bam) and outputs counts of spliced sense and antisense reads to a designated output file. Because this script must process an entire bam file of reads, it is very slow. The script is set up to break the bam file into chunks and process each chunk separately. On a cluster with drmaa installed, the script will use drmaa to submit each chunk as a separate job. On a single machine, the script will spawn a new process to run each chunk separately. Once all of the jobs have run, the script collates the results to give a count of the spliced reads. The script is run as follows:
 ```
