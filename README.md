@@ -40,6 +40,16 @@ The python script to find and count spliced antisense and sense reads also depen
 
 ## Installation
 
+To install the R rosa package from github, while RoSA is still a private repository, use `devtools::install_github`. You will need to install devtools if you have not already done so, and to obtain a personal access token through your github account.
+```
+devtools::install_github("bartongroup/km-rosa", auth_token="<your PAT>")
+```
+Load the package to get access to RoSA:
+```
+library("rosa", lib.loc="/Library/Frameworks/R.framework/Versions/3.3/Resources/library")
+```
+
+
 ## How to use RoSA
 
 RoSA (currently) is a combination of an R package and some python scripts. The R package takes as input datasets containing several different read counts:
@@ -49,6 +59,8 @@ RoSA (currently) is a combination of an R package and some python scripts. The R
 At least one of:
 - Spike-in sense and antisense counts (by aligning the reads data to the spike-ins, and generating read counts for each strand)
 - Spliced sense and antisense counts (via RoSA's python script (*antisense.py*) to filter spliced reads which occur at known splice junctions)
+
+Help for the R rosa functionality can be found by typing `help(rosa)` after installing and loading the RoSA R package.
 
 The python scripts can be used to 
 * create an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts via your favourite read counting tool (e.g. [featureCounts](http://subread.sourceforge.net)):
