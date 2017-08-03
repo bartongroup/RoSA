@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 
+#  Copyright 2017 Kira Mourao, Nick Schurch
+#
+#  This file is part of RoSA.
+#
+#  RoSA is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  RoSA is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with RoSA.  If not, see <http://www.gnu.org/licenses/>.
+
 """ An array job which counts antisense reads """
 
 import datetime
@@ -10,7 +27,7 @@ import pandas.io.common
 import numpy as np
 import sys
 
-from summary_routines.runcommand import RunCommand
+from viewseq.viewseq.runcommand import RunCommand
 
 __author__ = "Kira Mourao"
 __email__ = "k.mourao@dundee.ac.uk"
@@ -43,6 +60,7 @@ class AntisenseJob:
         intronlist["Chromosome"] = intronlist["Chromosome"].astype(str)
 
         try:
+
             read_chunks = self._get_reads(alignment_file, chro, lastpos, pos)  # chunk reads in the selected range
 
             for reads_df in read_chunks:
@@ -83,6 +101,8 @@ class AntisenseJob:
         cmd = ["sambamba", "view", "-F",
                "position > {} and position <= {} and cigar =~ /[0-9A-Z]*N[0-9A-Z]*/ and proper_pair and mapping_quality>50 and [NH]==1".format(last_pos, position),
                alignment_file, "{}:{}-{}".format(chro, last_pos, position)]
+
+        # if sambamba is not installed this will throw a file not found error which is not very helpful
 
         self.__logger.info("Running command: ".format(cmd))
         result = r.run_commands([cmd], output_file=True, forceSerial=True)

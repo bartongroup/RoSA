@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 
+#  Copyright 2017 Kira Mourao, Nick Schurch
+#
+#  This file is part of RoSA.
+#
+#  RoSA is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  RoSA is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with RoSA.  If not, see <http://www.gnu.org/licenses/>.
+
 """ Antisense functions """
 
 import datetime
@@ -11,10 +28,9 @@ import os
 import tempfile
 import shutil
 
-from summary_routines.runcommand import RunCommand
-from summary_routines.gtfparser import GtfParser
-from summary_routines.constants import *
-from anti_reads_as_job import AntisenseJob
+from viewseq.viewseq.runcommand import RunCommand
+from viewseq.viewseq.parser_factory import ParserFactory
+from viewseq.viewseq.constants import *
 
 __author__ = "Kira Mourao"
 __email__ = "k.mourao@dundee.ac.uk"
@@ -90,9 +106,9 @@ class Antisense:
 
         # given list of overlapping genes, find genes which overlap on same strand and export
         overlaps = pd.read_csv(overlapping_file, sep='\t', engine='python')
-        a = GtfParser(annotation_file)
+        parser = ParserFactory.create_parser(annotation_file)
 
-        annotation = a.featuredict['exon'].groupby(GENE_ID).first().reset_index()
+        annotation = parser.featuredict['exon'].groupby(GENE_ID).first().reset_index()
         overlaps.columns = [GENE_ID, "overlap", "gene2"]
         overlaps = pd.merge(overlaps, annotation[[GENE_ID, STRAND]], on=GENE_ID)
         overlaps.columns = ["gene1", "overlap", GENE_ID, "strand1"]
@@ -157,6 +173,7 @@ class Antisense:
 
             intron_file = os.path.join(hometempdir, "intronfile.csv")
             intronlist.to_csv(path_or_buf=intron_file, sep="\t", index=False)
+            logger.info("Saving introns to: {}".format(hometempdir))
         else:
             intronlist = pd.read_csv(intron_file, header=0, sep="\t")
 
@@ -170,13 +187,15 @@ class Antisense:
 
             logger.info("Chromosome {}".format(chro))
             logger.info("Max pos {}".format(maxpos))
-            step = 100000
+            step = 1000000
             for lastpos in range(1, maxpos, step):  # slice out a range of base pair positions
 
                 if chro != lastchro:
                     lastchro = chro
 
                 pos = lastpos + step - 1
+
+                # on cluster this seems to need to be ../anti_reads_as_job.py
                 cmd = ["python", "../anti_reads_as_job.py", "-l", alignment_file, "-i", intron_file, "-s",
                        str(lastpos), "-e", str(pos), "-o", chro]
                 filename = "anti-{}.{}-{}".format(chro, lastpos, pos)
@@ -191,7 +210,15 @@ class Antisense:
         for result_file in result_files:
 
             try:
-                result = pd.read_csv(result_file)
+                # on Mac there is sometimes extra output at the top of the file
+                # so search for first line containing gene_id,
+                i = 0  # number of lines to skip
+                with open(result_file) as fp:
+                    for i, line in enumerate(fp):
+                        if line.startswith('gene_id,'):
+                            break
+
+                result = pd.read_csv(result_file, skiprows=i)
 
                 if counts.empty:
                     counts = result
@@ -227,8 +254,8 @@ class Antisense:
 
     def _get_introns(self, annotation_file):
 
-        a = GtfParser(annotation_file)
-        intronlist = a.export_to_gtf2("","intron", out_to_file=False)
+        parser = ParserFactory.create_parser(annotation_file)
+        intronlist = parser.export_to_gtf2("","intron", out_to_file=False)
         intronlist = intronlist[["Chromosome", "Strand", "Start", "Stop", "gene_id"]]
 
         return intronlist

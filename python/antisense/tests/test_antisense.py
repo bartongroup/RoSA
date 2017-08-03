@@ -1,4 +1,22 @@
 #!/usr/bin/python
+
+#  Copyright 2017 Kira Mourao, Nick Schurch
+#
+#  This file is part of RoSA.
+#
+#  RoSA is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  RoSA is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with RoSA.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Unit tests for antisense module
 """
@@ -6,7 +24,7 @@ Unit tests for antisense module
 import unittest
 import csv
 import pandas as pd
-from antisense import Antisense
+from antisense.antisense import Antisense
 
 __author__ = "Kira Mourao"
 __email__ = "k.mourao@dundee.ac.uk"
@@ -60,19 +78,22 @@ class TestAntisense(unittest.TestCase):
                                          "Data/anti-results.csv")
 
         results = pd.read_csv("Data/anti-results.csv")
-        self.assertListEqual(results["anticounts"].tolist(), [1, 3, 2])
-        self.assertListEqual(results["sensecounts"].tolist(), [871, 123, 0])
+        self.assertListEqual(results["anticounts"].tolist(), [1])
+        self.assertListEqual(results["sensecounts"].tolist(), [871])
 
     def test_find_anti_with_sense_structure_overlapping(self):
-        a = Antisense()
-        a.find_anti_with_sense_structure("Data/genes_fixed.gtf",
-                                         "Data/AT1G68568.bam",
-                                         "Data/anti-results.csv")
+         a = Antisense()
+         a.find_anti_with_sense_structure("Data/genes_fixed.gtf",
+                                          "Data/AT1G68568.bam",
+                                          "Data/anti-results.csv")
 
-        results = pd.read_csv("Data/anti-results.csv")
-        self.assertListEqual(results["anticounts"].tolist(),
-                             [0.0, 0.0, 0.0, 4.0, 12.0, 10.0, 32.0, 18.0, 28.0, 44.0, 39.0, 283.0, 75.0, 30.0,
-                              128.0, 8.0, 20.0, 87.0, 965.0, 673.0, 6.0, 366.0])
-        self.assertListEqual(results["sensecounts"].tolist(),
-                             [34, 101, 6, 2729, 5384, 3517, 9426, 4735, 7155, 10958, 9069, 65159, 17238, 6646,
-                              21193, 1306, 3068, 12570, 78262, 51969, 445, 25253])
+         results = pd.read_csv("Data/anti-results.csv")
+
+         # beware, these results may change with different versions of sambamba etc.
+         # These results with sambamba 0.6.6
+         self.assertListEqual(results["anticounts"].tolist(),
+                              [0.0, 0.0, 0.0, 0.0, 4.0, 12.0, 10.0, 32.0, 18.0, 28.0, 44.0, 39.0, 283.0, 30.0,
+                               128.0, 8.0, 136.0, 20.0, 87.0, 964.0, 673.0, 6.0, 364.0])
+         self.assertListEqual(results["sensecounts"].tolist(),
+                              [34, 101, 6, 10, 2729, 5381, 3512, 9419, 4731, 7136, 10947, 9060, 65106, 6644,
+                               21173, 1306, 21373, 3068, 12554, 78167, 519631, 445, 25226])
