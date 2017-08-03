@@ -27,10 +27,16 @@ if it is not present already:
 install.packages("LSD")
 ```
 
-The python scripts depend on:
-* scipy
-* numpy
-* pandas
+The python scripts are targetted for [python 2.7](https://www.python.org/download/releases/2.7/) and depend on:
+- scipy (version 0.17.1 - will not work with latest version)
+- numpy
+- pandas (version 0.18 - 0.19.2 - will not work with latest version)
+- pysam
+- pyyaml
+- six
+- (optionally) drmaa
+
+The python script to find and count spliced antisense and sense reads also depends on [sambamba](http://lomereiter.github.io/sambamba/) being installed.
 
 ## Installation
 
@@ -39,29 +45,29 @@ The python scripts depend on:
 RoSA (currently) is a combination of an R package and some python scripts. The R package takes as input datasets containing several different read counts:
 
 - Full read counts by gene
-- Antisense counts by gene (via RoSA's python script to create an antisense annotation)
+- Antisense counts by gene (via RoSA's python script to create an antisense annotation, and then read counting as usual)
 At least one of:
 - Spike-in sense and antisense counts (by aligning the reads data to the spike-ins, and generating read counts for each strand)
 - Spliced sense and antisense counts (via RoSA's python script to filter “sense-strand” spliced reads)
 
 The python scripts can be used to 
-* create an antisense annotation to use to generate antisense read counts via a counting tool such as featureCounts:
+* create an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts via your favourite read counting tool (e.g. featureCounts):
 ```
 from viewseq.gffParser import GffParser
-p = GffParser("filename.gff")
-p.build_antisense_gtf_gene_only([(p.featureType.exon,outfiel.gtf)])
+p = GffParser("inputannotation.gff")
+p.build_antisense_gtf_gene_only([(p.featureType.exon,"outfile.gtf")])
 ```
 or
 ```
 from viewseq.gtfParser import GtfParser
-p = GtfParser("filename.gtf")
-p.build_antisense_gtf_gene_only([(p.featureType.exon,outfile.gtf)])
+p = GtfParser("inputannotation.gtf")
+p.build_antisense_gtf_gene_only([(p.featureType.exon,"outfile.gtf")])
 ```
-* generate sense and antisense counts of reads at splice junctions
+* generate sense and antisense counts of reads at splice junctions. The script takes the usual annotation (as gtf/gff) and corresponding alignment (as bam) and outputs counts of spliced sense and antisense reads to a designated output file. Because this script must process an entire bam file of reads, this is very slow.
 
 ## Known issues
 
-Installing pysam via pip can result in a broken installation: https://github.com/pysam-developers/pysam/issues/475
+Installing pysam via pip can result in a [broken installation](https://github.com/pysam-developers/pysam/issues/475)
 Workaround: use bioconda instead.
 
 ## Contact information
