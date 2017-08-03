@@ -39,3 +39,5 @@ vignettes/*.pdf
 *.gtf
 *.gff
 *.svg
+
+*.largefile
