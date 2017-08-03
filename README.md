@@ -49,6 +49,11 @@ Load the package to get access to RoSA:
 library("rosa", lib.loc="/Library/Frameworks/R.framework/Versions/3.3/Resources/library")
 ```
 
+RoSA's scripts rely on a python package, viewseq, which can be installed via:
+```
+pip install git+https://github.com/bartongroup/km-rosa.git#subdirectory=python/viewseq
+```
+
 
 ## How to use RoSA
 
