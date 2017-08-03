@@ -51,7 +51,7 @@ At least one of:
 - Spliced sense and antisense counts (via RoSA's python script to filter “sense-strand” spliced reads)
 
 The python scripts can be used to 
-* create an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts via your favourite read counting tool (e.g. featureCounts):
+* create an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts via your favourite read counting tool (e.g. [featureCounts](http://subread.sourceforge.net)):
 ```
 from viewseq.gffParser import GffParser
 p = GffParser("inputannotation.gff")
@@ -63,7 +63,11 @@ from viewseq.gtfParser import GtfParser
 p = GtfParser("inputannotation.gtf")
 p.build_antisense_gtf_gene_only([(p.featureType.exon,"outfile.gtf")])
 ```
-* generate sense and antisense counts of reads at splice junctions. The script takes the usual annotation (as gtf/gff) and corresponding alignment (as bam) and outputs counts of spliced sense and antisense reads to a designated output file. Because this script must process an entire bam file of reads, this is very slow.
+* generate sense and antisense counts of reads at splice junctions. The script takes the standard annotation (as gtf/gff) and corresponding alignment (as bam) and outputs counts of spliced sense and antisense reads to a designated output file. Because this script must process an entire bam file of reads, it is very slow. The script is set up to break the bam file into chunks and process each chunk separately. On a cluster with drmaa installed, the script will use drmaa to submit each chunk as a separate job. On a single machine, the script will spawn a new process to run each chunk separately. Once all of the jobs have run, the script collates the results to give a count of the spliced reads. The script is run as follows:
+```
+python antisense.py -a <annotation file as gff or gtf> -l <alignment file as bam> -o <output file>
+```
+An additional -i option allows the user to input a file containing the extents of all introns, which is otherwise calculated as part of splice counting process. This is primarily useful for testing on the same annotation multiple times, as the intron file can be calculated once and re-used, saving some time. The location of the intron file is output by the script.
 
 ## Known issues
 
