@@ -43,7 +43,7 @@ setup(name='rosa',
       entry_points={
         'console_scripts': [
             'make_annotation = antisense.make_annotation:main',
-            'count_spliced = antisense.antisense::main'
+            'count_spliced = antisense.antisense:main'
         ]
       },
 
