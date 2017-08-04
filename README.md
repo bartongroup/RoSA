@@ -28,7 +28,7 @@ install.packages("LSD")
 ```
 
 The python scripts are targetted for [python 2.7](https://www.python.org/download/releases/2.7/) and depend on:
-- scipy (version 0.17.1 - will not work with latest version)
+- scipy (version 0.16.1 - 0.17.1 - will not work with latest version)
 - numpy
 - pandas (version 0.18 - 0.19.2 - will not work with latest version)
 - six
@@ -55,6 +55,7 @@ and uninstalled via:
 ```
 pip uninstall rosa
 ```
+The pip installer will handle installing the python dependencies with the correct versions.
 
 
 ## How to use RoSA
