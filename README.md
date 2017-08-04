@@ -49,11 +49,11 @@ library("rosa", lib.loc="/Library/Frameworks/R.framework/Versions/3.3/Resources/
 
 RoSA's scripts are set up in a python package which can be installed via:
 ```
-pip install git+https://github.com/bartongroup/km-rosa.git#subdirectory=python/antisense
+pip install git+https://github.com/bartongroup/km-rosa.git#subdirectory=python
 ```
 and uninstalled via:
 ```
-pip uninstall antisense
+pip uninstall rosa
 ```
 
 
@@ -82,11 +82,11 @@ An additional -i option allows the user to input a file containing the extents o
 
 ## Known issues
 
-
+RoSA's python scripts fail with the latest versions of scipy and pandas. This is being investigated.
 
 ## Contact information
 
-The `RoSA` R package was developed within [The Barton Group](http://www.compbio.dundee.ac.uk) at [The University of Dundee](http://www.dundee.ac.uk)
+The `RoSA` R and python tool was developed within [The Barton Group](http://www.compbio.dundee.ac.uk) at [The University of Dundee](http://www.dundee.ac.uk)
 by Dr. Kira Mourão and Dr. Nick Schurch.
 
 To **report problems** or ask for **assistance**, please raise a new issue [on the project's support forum](https://github.com/bartongroup/RoSA/issues).
