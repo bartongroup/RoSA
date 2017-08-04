@@ -28,9 +28,9 @@ import os
 import tempfile
 import shutil
 
-from viewseq.viewseq.runcommand import RunCommand
-from viewseq.viewseq.parser_factory import ParserFactory
-from viewseq.viewseq.constants import *
+from runcommand import RunCommand
+from parser_factory import ParserFactory
+from constants import *
 
 __author__ = "Kira Mourao"
 __email__ = "k.mourao@dundee.ac.uk"

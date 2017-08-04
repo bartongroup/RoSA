@@ -23,7 +23,7 @@ import argparse
 import datetime
 import logging
 
-from viewseq.viewseq.parser_factory import ParserFactory
+from parser_factory import ParserFactory
 
 __author__ = "Kira Mourao"
 __email__ = "k.mourao@dundee.ac.uk"

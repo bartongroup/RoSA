@@ -27,7 +27,7 @@ import pandas.io.common
 import numpy as np
 import sys
 
-from viewseq.viewseq.runcommand import RunCommand
+from runcommand import RunCommand
 
 __author__ = "Kira Mourao"
 __email__ = "k.mourao@dundee.ac.uk"

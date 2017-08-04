@@ -4,6 +4,7 @@
 
 # Session Data files
 .RData
+.RBuildignore
 
 # Example code in package build process
 *-Ex.R
@@ -41,3 +42,6 @@ vignettes/*.pdf
 *.svg
 
 *.largefile
+*.idea
+*.DS_Store
+*~
