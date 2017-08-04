@@ -1,4 +1,22 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
+#  Copyright 2017 Kira Mourao, Nick Schurch
+#
+#  This file is part of RoSA.
+#
+#  RoSA is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  RoSA is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with RoSA.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Unit tests for gffparser module
 """
@@ -265,6 +283,38 @@ class TestGffParser(unittest.TestCase):
 
         temp_file.close()
 
+        # gtf2 version of overlapping.gff for checking gtf output
+        self.test_gtf_sq = "{}/overlapping_sq.gtf".format(self.existing_path)
+        temp_file = open(self.test_gtf_sq, "w")
+
+        temp_file.write('Chr1\t.\tintron\t1501\t2999\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n')
+        temp_file.write('Chr1\t.\tintron\t3903\t4999\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n')
+        temp_file.write('Chr1\t.\tintron\t5501\t6999\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n')
+
+        temp_file.write('Chr2\t.\tintron\t1501\t2999\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n')
+        temp_file.write('Chr2\t.\tintron\t3903\t4999\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n')
+        temp_file.write('Chr2\t.\tintron\t5501\t6999\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n')
+
+        temp_file.write("Chr1\t.\tintron\t7001\t8899\t.\t-\t.\tgene_id \"gene00002\"; transcript_id \"gene00002\";\n")
+
+        temp_file.write("Chr1\t.\texon\t1050\t1500\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n")
+        temp_file.write("Chr1\t.\texon\t3000\t3902\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n")
+        temp_file.write("Chr1\t.\texon\t5000\t5500\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n")
+        temp_file.write("Chr1\t.\texon\t7000\t9000\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n")
+
+        temp_file.write("Chr2\t.\texon\t1050\t1500\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n")
+        temp_file.write("Chr2\t.\texon\t3000\t3902\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n")
+        temp_file.write("Chr2\t.\texon\t5000\t5500\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n")
+        temp_file.write("Chr2\t.\texon\t7000\t9000\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n")
+
+        temp_file.write("Chr1\t.\texon\t5590\t7000\t.\t-\t.\tgene_id \"gene00002\"; transcript_id \"gene00002\";\n")
+        temp_file.write("Chr1\t.\texon\t8900\t12000\t.\t-\t.\tgene_id \"gene00002\"; transcript_id \"gene00002\";\n")
+
+
+
+        temp_file.close()
+
+
         self.test_fc = "{}/counts.out".format(self.existing_path)
         temp_file = open(self.test_fc, "w")
         temp_file.write("Geneid\tChr\tStart\tEnd\tStrand\tLength\tmini.bam\n")
@@ -425,6 +475,44 @@ class TestGffParser(unittest.TestCase):
         temp_file.write("Chr2\t.\tthree_prime_UTR\t7601\t9000\t.\t+\t0\tParent=mRNA00008,mRNA00009,mRNA00010\n")
         temp_file.close()
 
+        # a gff3 file from Ensembl
+        self.gff3_gff = "{}/gff3.gff".format(self.existing_path)
+        temp_file = open(self.gff3_gff, "w")
+        temp_file.write("##gff-version 3\n")
+        temp_file.write("1\tTAIR\tchromosome\t1\t30427671\t.\t.\t.\tID=chromosome:1;Alias = CP002684.1,Chr1\n")
+        temp_file.write("###\n");
+        temp_file.write("1\taraport11\tgene\t3631\t5899\t.\t+\t.\tID=gene:AT1G01010;Name=NAC001;"
+                        "biotype=protein_coding;description=NAC domain-containing protein 1 [Source:UniProtKB/Swiss-Prot%3BAcc:Q0WV96];gene_id = AT1G01010;logic_name=araport11\n")
+        temp_file.write("1\taraport11\tmRNA\t3631\t5899\t.\t+\t.\tID=transcript:AT1G01010.1;Parent=gene:AT1G01010;biotype=protein_coding;transcript_id=AT1G01010.1\n")
+        temp_file.write("1\taraport11\tfive_prime_UTR\t3631\t3759\t.\t+\t.\tParent=transcript:AT1G01010.1\n")
+        temp_file.write("1\taraport11\texon\t3631\t3913\t.\t+\t.\tParent=transcript:AT1G01010.1;Name=AT1G01010.1.exon1;constitutive=1;ensembl_end_phase=1;ensembl_phase=-1;exon_id=AT1G01010.1.exon1;rank=1\n")
+        temp_file.write("1\taraport11\tCDS\t3760\t3913\t.\t+\t0\tID=CDS:AT1G01010.1;Parent = transcript:AT1G01010.1;protein_id=AT1G01010.1\n")
+        temp_file.write("1\taraport11\texon\t3996\t4276\t.\t+\t.\tParent=transcript:AT1G01010.1;Name=AT1G01010.1.exon2;constitutive=1;ensembl_end_phase=0;ensembl_phase=1;exon_id=AT1G01010.1.exon2;rank=2\n")
+        temp_file.write("1\taraport11\tCDS\t3996\t4276\t.\t+\t2\tID=CDS:AT1G01010.1;Parent=transcript:AT1G01010.1;protein_id=AT1G01010.1\n")
+        temp_file.write("1\taraport11\texon\t4486\t4605\t.\t+\t.\tParent=transcript:AT1G01010.1;Name=AT1G01010.1.exon3;constitutive=1;ensembl_end_phase=0;ensembl_phase=0;exon_id=AT1G01010.1.exon3;rank=3\n")
+        temp_file.write("1\taraport11\tCDS\t4486\t4605\t.\t+\t0\tID=CDS:AT1G01010.1;Parent=transcript:AT1G01010.1;protein_id=AT1G01010.1\n")
+        temp_file.write("1\taraport11\texon\t4706\t5095\t.\t+\t.\tParent=transcript:AT1G01010.1;Name=AT1G01010.1.exon4;constitutive=1;ensembl_end_phase=0;ensembl_phase=0;exon_id=AT1G01010.1.exon4;rank=4\n")
+        temp_file.write("1\taraport11\tCDS\t4706\t5095\t.\t+\t0\tID=CDS:AT1G01010.1;Parent=transcript:AT1G01010.1;protein_id=AT1G01010.1\n")
+        temp_file.write("1\taraport11\texon\t5174\t5326\t.\t+\t.\tParent=transcript:AT1G01010.1;Name=AT1G01010.1.exon5;constitutive=1;ensembl_end_phase=0;ensembl_phase=0;exon_id=AT1G01010.1.exon5;rank=5\n")
+        temp_file.write("1\taraport11\tCDS\t5174\t5326\t.\t+\t0\tID=CDS:AT1G01010.1;Parent=transcript:AT1G01010.1;protein_id=AT1G01010.1\n")
+        temp_file.write("1\taraport11\tCDS\t5439\t5630\t.\t+\t0\tID=CDS:AT1G01010.1;Parent=transcript:AT1G01010.1;protein_id=AT1G01010.1\n")
+        temp_file.write("1\taraport11\texon\t5439\t5899\t.\t+\t.\tParent=transcript:AT1G01010.1;Name=AT1G01010.1.exon6;constitutive=1;ensembl_end_phase=-1;ensembl_phase=0;exon_id=AT1G01010.1.exon6;rank=6\n")
+        temp_file.write("1\taraport11\tthree_prime_UTR\t5631\t5899\t.\t+\t.\tParent=transcript:AT1G01010.1\n")
+        temp_file.write("###\n")
+        temp_file.write("1\taraport11\tgene\t6788\t9130\t.\t-\t.\tID=gene:AT1G01020;Name=ARV1;biotype=protein_coding;description=ARV1 [Source:UniProtKB/TrEMBL%3BAcc:Q5MK24];gene_id=AT1G01020;logic_name=araport11\n")
+        temp_file.write("1\taraport11\tmRNA\t6788\t8737\t.\t-\t.\tID=transcript:AT1G01020.6;Parent=gene:AT1G01020;biotype=protein_coding;transcript_id=AT1G01020.6\n")
+        temp_file.write("1\taraport11\texon\t6788\t7069\t.\t-\t.\tParent=transcript:AT1G01020.6;Name=AT1G01020.2.exon8;constitutive=0;ensembl_end_phase=-1;ensembl_phase=-1;exon_id=AT1G01020.2.exon8;rank=6\n")
+        temp_file.write("1\taraport11\tthree_prime_UTR\t6788\t7069\t.\t-\t.\tParent=transcript:AT1G01020.6\n")
+        temp_file.write("1\taraport11\tthree_prime_UTR\t7157\t7314\t.\t-\t.\tParent=transcript:AT1G01020.6\n")
+        temp_file.write("1\taraport11\texon\t7157\t7450\t.\t-\t.\tParent=transcript:AT1G01020.6;Name=AT1G01020.2.exon7;constitutive=0;ensembl_end_phase=-1;ensembl_phase=2;exon_id=AT1G01020.2.exon7;rank=5\n")
+        temp_file.write("1\taraport11\tCDS\t7315\t7450\t.\t-\t1\tID=CDS:AT1G01020.6;Parent=transcript:AT1G01020.6;protein_id=AT1G01020.6\n")
+        temp_file.write("1\taraport11\texon\t7564\t7649\t.\t-\t.\tParent=transcript:AT1G01020.6;Name=AT1G01020.1.exon6;constitutive=1;ensembl_end_phase=2;ensembl_phase=0;exon_id=AT1G01020.1.exon6;rank=4\n")
+        temp_file.write("1\taraport11\tCDS\t7564\t7649\t.\t-\t0\tID=CDS:AT1G01020.6;Parent=transcript:AT1G01020.6;protein_id=AT1G01020.6\n")
+        temp_file.write("1\taraport11\texon\t8236\t8325\t.\t-\t.\tParent=transcript:AT1G01020.6;Name=AT1G01020.1.exon3;constitutive=0;ensembl_end_phase=0;ensembl_phase=0;exon_id=AT1G01020.1.exon3;rank=3\n")
+        temp_file.write("1\taraport11\tCDS\t8236\t8325\t.\t-\t0\tID=CDS:AT1G01020.6;Parent=transcript:AT1G01020.6;protein_id=AT1G01020.6\n")
+
+        temp_file.close()
+
     def tearDown(self):
         """Tidy up files created for testing."""
 
@@ -436,10 +524,12 @@ class TestGffParser(unittest.TestCase):
         os.remove(self.antisense_gff)
         os.remove(self.negstrandcds_gff)
         os.remove(self.test_gtf)
+        os.remove(self.test_gtf_sq)
         os.remove(self.namechange_gff)
         os.remove(self.test_fc_gff)
         os.remove(self.test_fc)
         os.remove(self.test_fc_t_utr)
+        os.remove(self.gff3_gff)
         os.removedirs(self.existing_path)
 
     # def test_are_unexpected_names(self):
@@ -464,15 +554,21 @@ class TestGffParser(unittest.TestCase):
         """ Test intron lengths calc. """
 
         p = GffParser(self.utrseqont_gff)
-        lengths = p.get_ftr_lengths(p.featureType.intron)[LENGTH].tolist()
+        lengths = p.get_ftr_lengths(p.featureType.intron, usesq=False)[LENGTH].tolist()
         self.assertItemsEqual(lengths, [1499, 1499, 3499, 1097])
+
+        lengths = p.get_ftr_lengths(p.featureType.intron)[LENGTH].tolist()
+        self.assertItemsEqual(lengths, [1499, 1097, 1499])
 
     def test_exon_lengths(self):
         """ Test exon lengths calc. """
 
         p = GffParser(self.utrseqont_gff)
-        lengths = p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist()
+        lengths = p.get_ftr_lengths(p.featureType.exon, usesq=False)[LENGTH].tolist()
         self.assertItemsEqual(lengths, [451, 201, 903, 903, 903, 501, 2001])
+
+        lengths = p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist()
+        self.assertItemsEqual(lengths, [451, 903, 501, 2001])
 
     def test_exons_per_gene_no_geneIDs(self):
         """ Test empty list is returned when there are no gene IDs available. """
@@ -486,7 +582,7 @@ class TestGffParser(unittest.TestCase):
 
         p = GffParser(self.utrseqont_gff)
         exons_by_gene = p.get_exons_per_gene()[EXON_COUNTS].tolist()
-        self.assertItemsEqual(exons_by_gene, [7])
+        self.assertItemsEqual(exons_by_gene, [11.0/3])
 
     def test_transcripts_by_gene(self):
         """ Test transcript counts calc. """
@@ -499,30 +595,60 @@ class TestGffParser(unittest.TestCase):
         """ Test exon lengths when genes in +ve and -ve strands overlap """
 
         p = GffParser(self.overlapping_gff)
-        lengths = p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist()
+        lengths = p.get_ftr_lengths(p.featureType.exon, usesq=False)[LENGTH].tolist()
         self.assertItemsEqual(lengths, [451, 201, 903, 903, 903, 501, 2001, 451, 201, 903, 903, 903, 501, 2001,
                                         1411, 3101, 3101])
+
+        lengths = p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist()
+        self.assertItemsEqual(lengths, [451, 903, 501, 2001, 451, 903, 501, 2001,
+                                        1411, 3101])
 
     def test_overlapping_genes_exon_count(self):
         """ Test exon counts when genes in +ve and -ve strands overlap """
 
         p = GffParser(self.overlapping_gff)
         exons_by_gene = p.get_exons_per_gene()[EXON_COUNTS].tolist()
-        self.assertItemsEqual(exons_by_gene, [7, 3, 7])
+        self.assertItemsEqual(exons_by_gene, [11.0/3, 3.0/2, 11.0/3])
 
     def test_overlapping_genes_intron_lengths(self):
         """ Test intron lengths when genes in +ve and -ve strands overlap """
 
         p = GffParser(self.overlapping_gff)
-        lengths = p.get_ftr_lengths(p.featureType.intron)[LENGTH].tolist()
+        lengths = p.get_ftr_lengths(p.featureType.intron,usesq=False)[LENGTH].tolist()
         self.assertItemsEqual(lengths, [1499, 1499, 3499, 1097, 1499, 1499, 3499, 1097, 1899])
+
+        lengths = p.get_ftr_lengths(p.featureType.intron)[LENGTH].tolist()
+        self.assertItemsEqual(lengths, [1499, 1097, 1499, 1499, 1097, 1499, 1899])
 
     def test_missing_names(self):
         """ Test that user is notified about unexpected feature names. """
 
         self.assertRaises(ValueError, GffParser, self.namechange_gff)
 
-    def test_output_to_gtf2(self):
+    def test_output_to_gtf2_without_sq(self):
+        """ Test gff input correctly output to gtf """
+
+        p = GffParser(self.overlapping_gff)
+        p.export_to_gtf2(os.path.splitext(self.output_gtf)[0], usesq=False)
+
+        # check file exists
+        self.assertTrue(os.path.exists(self.output_gtf), "Output gtf file does not exist")
+
+        # check contents correspond to gtf2 format
+        new_gtf_handle = open(self.output_gtf, "r")
+        test_gtf_handle = open(self.test_gtf, "r")
+
+        newdata = new_gtf_handle.readlines()
+        testdata = test_gtf_handle.readlines()
+
+        self.assertListEqual(newdata, testdata)
+
+        new_gtf_handle.close()
+        test_gtf_handle.close()
+
+        os.remove(self.output_gtf)
+
+    def test_output_to_gtf2_with_sq(self):
         """ Test gff input correctly output to gtf """
 
         p = GffParser(self.overlapping_gff)
@@ -533,7 +659,30 @@ class TestGffParser(unittest.TestCase):
 
         # check contents correspond to gtf2 format
         new_gtf_handle = open(self.output_gtf, "r")
-        test_gtf_handle = open(self.test_gtf, "r")
+        test_gtf_handle = open(self.test_gtf_sq, "r")
+
+        newdata = new_gtf_handle.readlines()
+        testdata = test_gtf_handle.readlines()
+
+        self.assertListEqual(newdata, testdata)
+
+        new_gtf_handle.close()
+        test_gtf_handle.close()
+
+        os.remove(self.output_gtf)
+
+    def test_output_to_gtf2_with_extra(self):
+        """ Test gff input correctly output to gtf """
+
+        p = GffParser(self.overlapping_gff)
+        p.export_to_gtf2(os.path.splitext(self.output_gtf)[0], exportlist=["exon", "intron", "unknown"])
+
+        # check file exists
+        self.assertTrue(os.path.exists(self.output_gtf), "Output gtf file does not exist")
+
+        # check contents correspond to gtf2 format
+        new_gtf_handle = open(self.output_gtf, "r")
+        test_gtf_handle = open(self.test_gtf_sq, "r")
 
         newdata = new_gtf_handle.readlines()
         testdata = test_gtf_handle.readlines()
@@ -637,7 +786,10 @@ class TestGffParser(unittest.TestCase):
 
         p = GffParser(self.negstrandcds_gff)
 
-        self.assertListEqual(p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist(), [1411, 3001, 3001])
+        self.assertListEqual(p.get_ftr_lengths(p.featureType.exon,usesq=False)[LENGTH].tolist(), [1411, 3001, 3001])
+        self.assertListEqual(p.get_ftr_lengths(p.featureType.intron,usesq=False)[LENGTH].tolist(), [1999])
+
+        self.assertListEqual(p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist(), [1411, 3001])
         self.assertListEqual(p.get_ftr_lengths(p.featureType.intron)[LENGTH].tolist(), [1999])
 
     def test_get_data_by_feature(self):
@@ -653,12 +805,21 @@ class TestGffParser(unittest.TestCase):
             elif name == p.featureType.exon:
                 lengths = df[LENGTH].tolist()
                 self.assertItemsEqual(lengths, [451, 201, 903, 903, 903, 501, 2001])
+            elif name == p.featureType.five_prime_UTR:
+                lengths = df[LENGTH].tolist()
+                self.assertItemsEqual(lengths, [151, 893])  # not ideal test, as we add both RNA3 transcripts
+            elif name == p.featureType.three_prime_UTR:
+                lengths = df[LENGTH].tolist()
+                self.assertItemsEqual(lengths, [1400])
 
     def test_gene_ontologies(self):
         """ Test reading of ontology data. """
         p = GffParser(self.seqont2_gff, self.gene_ontology)
-        self.assertItemsEqual(p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist(),
+        self.assertItemsEqual(p.get_ftr_lengths(p.featureType.exon, usesq=False)[LENGTH].tolist(),
                                 [451, 201, 903, 903, 903, 501, 2001])
+
+        self.assertItemsEqual(p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist(),
+                              [451, 903, 501, 2001])
 
     def test_build_antisense(self):
         """ Test transcript counts calc. """
@@ -710,6 +871,30 @@ class TestGffParser(unittest.TestCase):
                                                               5000, 7000, 3391, 5000, 7000])
         self.assertItemsEqual(p.cds_tr_join[STOP].tolist(), [1500, 3902, 5500, 7600, 1500,
                                                              5500, 7600, 3902, 5500, 7600])
+
+    def test_gff3_parsing(self):
+        """ Test parsing from gff3 file """
+
+        p = GffParser(self.gff3_gff)
+
+        self.assertEqual(len(p.genes),2)
+
+    # def test_squash_data(self):
+    #
+    #     p = GffParser(self.utrseqont_gff)
+    #     ss = p.make_squashed_extents()
+    #
+    #     self.assertItemsEqual(ss[0][START].tolist(), [1050, 3000, 5000, 7000])
+    #     self.assertItemsEqual(ss[0][STOP].tolist(), [1500, 3902, 5500, 9000])
+    #
+    #     self.assertItemsEqual(ss[1][START].tolist(), [1501, 3903, 5501])
+    #     self.assertItemsEqual(ss[1][STOP].tolist(), [2999, 4999, 6999])
+    #
+    #     self.assertItemsEqual(ss[2][START].tolist(), [7601])
+    #     self.assertItemsEqual(ss[2][STOP].tolist(), [9000])
+    #
+    #     self.assertItemsEqual(ss[3][START].tolist(), [1050, 1300, 3000])
+    #     self.assertItemsEqual(ss[3][STOP].tolist(), [1200, 1500, 3390])
 
 
 if __name__ == '__main__':

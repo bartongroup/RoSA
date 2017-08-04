@@ -96,14 +96,24 @@ class Parser(object):
 
         self._build_region_data(gene_name, exon_name, transcript_name, three_utr_name, five_utr_name, cds_name)
 
+        self._make_squashed_extents()
+
         self.featuredict = {self.featureType.exon: self.ex_tr_join,
                             self.featureType.intron: self.in_tr_join,
                             self.featureType.three_prime_UTR: self.t_utr_tr_join,
                             self.featureType.five_prime_UTR: self.f_utr_tr_join,
                             self.featureType.CDS: self.cds_tr_join}
 
+        self.sqdict = {self.featureType.exon: self.sq_ex,
+                       self.featureType.intron: self.sq_in,
+                       self.featureType.three_prime_UTR: self.sq_tutr,
+                       self.featureType.five_prime_UTR: self.sq_futr}
+
         # uses self.featuredict in creation
         self.featuredict[self.featureType.antisense] = self.build_antisense_gtf_gene_only()
+
+        # if we used squashed dict then the antisense features will be squashed too
+        self.sqdict[self.featureType.antisense] = self.featuredict[self.featureType.antisense]
 
     @abstractmethod
     def _preprocess_data(self):
@@ -122,6 +132,87 @@ class Parser(object):
         :param cds_name: name used for CDSs
         """
         pass
+
+    def _make_squashed_extents(self):
+        """ Build merged extents of features for every region. """
+
+        self.sq_ex = self._squash_region_data(self.ex_tr_join)
+        self.sq_tutr = self._squash_region_data(self.t_utr_tr_join)
+        self.sq_futr = self._squash_region_data(self.f_utr_tr_join)
+
+        self.sq_in = self._build_introns(self.sq_ex)
+
+        # add a fake RNAID in to keep later processing happy - some grouping is done by RNAID
+        self.sq_in[RNA_ID] = self.sq_in[GENE_ID]
+
+    def _squash_region_data(self, extents):
+        """ Squash extents down on a per gene basis so that we have the maximum covered extent
+            of the extents in the gene e.g.
+            ==============--------------==========
+                  ============------====================
+            becomes
+            ==================------====================
+        """
+
+        # don't try to do anything if extents is empty, just return an empty df
+        if extents.empty:
+            return pd.DataFrame
+
+        #to try to avoid memory issues, break down into chromosomes
+        chrs = extents[CHROMOSOME].value_counts().index.tolist()
+        strands = ["+", "-"]
+
+        full_sq_set = pd.DataFrame()
+        squashset = pd.DataFrame()
+
+        for chro in chrs:
+            for strand in strands:
+
+                current_extents = extents.loc[extents[CHROMOSOME] == chro].loc[extents[STRAND]==strand]
+                squashset_len = 0 # try to avoid issues measuring length of empty dataframe
+                old_len = len(current_extents.index)
+
+                # repeatedly loop trying to squash overlapping exons
+                # may not be the fastest approach...
+                while old_len != squashset_len:
+
+                    # for extents do an inner join on gene id
+                    squashset = pd.merge(current_extents[[GENE_ID, START, STOP, SOURCE, TYPE, SCORE, PHASE]],
+                                         current_extents[[GENE_ID, START, STOP]], on=GENE_ID)
+
+                    # select overlapping things
+                    squashset = squashset[((squashset["Start_y"] <= squashset["Start_x"]) & (squashset["Stop_y"] >= squashset["Start_x"])) |
+                                          ((squashset["Stop_y"] >= squashset["Stop_x"]) & (squashset["Start_y"] <= squashset["Stop_x"]))]
+
+                    # calculate min start and max end for each row
+                    squashset["minstart"] = squashset.loc[:, ["Start_x", "Start_y"]].min(axis=1)
+                    squashset["maxend"] = squashset.loc[:, ["Stop_x", "Stop_y"]].max(axis=1)
+
+                    # calculate length between min start and max end
+                    squashset["sq_length"] = squashset["maxend"] - squashset["minstart"]
+
+                    # pull out row for each exon which has max length
+                    indexes = squashset.groupby([GENE_ID, "Start_x", "Stop_x"])["sq_length"].idxmax()
+
+                    squashset = squashset.loc[indexes.reset_index()["sq_length"]]
+                    squashset.drop_duplicates([GENE_ID, "minstart", "maxend"], inplace=True)
+                    squashset[CHROMOSOME] = chro
+                    squashset[STRAND] = strand
+
+                    old_len = len(current_extents.index)
+                    squashset_len = len(squashset.index)
+                    current_extents = squashset[[GENE_ID, CHROMOSOME, STRAND, SOURCE, TYPE, SCORE, PHASE, "minstart", "maxend"]]
+                    current_extents.columns = [GENE_ID, CHROMOSOME, STRAND, SOURCE, TYPE, SCORE, PHASE, START, STOP]
+
+
+                full_sq_set = pd.concat([full_sq_set, squashset], axis=0)
+
+        squashset = full_sq_set[[GENE_ID, CHROMOSOME, STRAND, SOURCE, TYPE, SCORE, PHASE, "minstart", "maxend"]].copy()
+        squashset.columns = [GENE_ID, CHROMOSOME, STRAND, SOURCE, TYPE, SCORE, PHASE, START, STOP]
+        squashset.drop_duplicates([GENE_ID, START, STOP], inplace=True)
+        squashset[RNA_ID] = squashset[GENE_ID]  # set to geneid so that intron calcs can differentiate
+
+        return squashset
 
     def _read_ontology(self, ontology, basename):
         """ Read in data from ontology files
@@ -148,7 +239,7 @@ class Parser(object):
 
     def get_data_by_feature(self):
         """ Return list of tuples of (ftr name, dataframe) where dataframe corresponds to the ftr
-        :return: list of tuples of (ftr name, dataframe)
+            :return: list of tuples of (ftr name, dataframe)
         """
 
         result_list = []
@@ -166,6 +257,21 @@ class Parser(object):
 
                 result_list.append((name, feature_df[[GENE_ID, LENGTH]]))
 
+            elif (name == self.featureType.five_prime_UTR) or (name == self.featureType.three_prime_UTR):
+
+                # give ftr a length attribute
+                feature_df[LENGTH] = feature_df[STOP] - feature_df[START] + 1
+
+                # remove duplicates at transcript level
+                feature_df.drop_duplicates([CHROMOSOME, GENE_ID, STRAND, START, STOP], inplace=True)
+                feature_df.drop([SCORE, SOURCE, STRAND, TYPE, PHASE], axis=1, inplace=True)
+
+                # UTRs should have lengths summed across transcripts
+                feature_df = feature_df.groupby(RNA_ID).aggregate({LENGTH: 'sum',
+                                                                   GENE_ID: 'first'}).reset_index()
+
+                result_list.append((name, feature_df[[GENE_ID, LENGTH]]))
+
             elif not feature_df.empty:
 
                 # give ftr a length attribute
@@ -179,20 +285,29 @@ class Parser(object):
 
         return result_list
 
-    def get_ftrdict(self, name):
-        return self.featuredict[name]
+# seem unused
+   # def get_ftrdict(self, name):
+   #     return self.featuredict[name]
 
-    def get_ftr_lengths(self, ftr, bygene=False):
+    def get_ftr_lengths(self, ftr, bygene=False, usesq=True):
+        """ Return lengths of features of type ftr, individually or by gene. Uses squashed representation.
+        :param ftr: the type of feature to get feature lengths for
+        :param bygene: True if lengths to be summed across the gene
+        :return: pandas Series of feature lengths
+        """
 
         self._check_feature_type(ftr)
-
-        if ftr == self.featureType.exon:
-            return self._get_lengths(self.unique_exons, bygene)
-        elif ftr == self.featureType.intron:
-            return self._get_lengths(self.introns, bygene)
+        self.logger.debug("Calculating feature lengths: feature is {}".format(ftr))
+        if usesq:
+            return self._get_lengths(self.sqdict[ftr], bygene)
         else:
-            self.logger.debug("Calculating feature lengths: feature is {}".format(ftr))
-            return self._get_lengths(self.featuredict[ftr], bygene)
+            if ftr == self.featureType.exon:
+                return self._get_lengths(self.unique_exons, bygene)
+            elif ftr == self.featureType.intron:
+                return self._get_lengths(self.introns, bygene)
+            else:
+                self.logger.debug("Calculating feature lengths: feature is {}".format(ftr))
+                return self._get_lengths(self.featuredict[ftr], bygene)
 
     def _get_lengths(self, ftr_df, bygene):
 
@@ -210,10 +325,17 @@ class Parser(object):
 
     def get_exons_per_gene(self):
         """ Get number of exons per gene
-        :return: number of unique exons, per gene, or an empty dataframe if no gene can be identified for any exon
+        :return: average number of exons per transcript, per gene,
+        or an empty dataframe if no gene can be identified for any exon
         (can happen if gene IDs are missing)
         """
-        return self._get_ftrcount_per_gene("exon", self.unique_exons)
+        counts = self._get_ftrcount_per_gene("exon", self.ex_tr_join)
+        transcripts = self._get_ftrcount_per_gene("transcript", self.transcripts)
+
+        # translate exon count to average number of exons per transcript per gene
+        counts = pd.merge(counts, transcripts, left_index=True, right_index=True)
+        counts["num_exons"] = counts["exon_counts"] / counts["transcript_counts"]
+        return pd.DataFrame(counts["num_exons"])
 
     def get_transcripts_per_gene(self):
         """ Get number of transcripts per gene
@@ -270,10 +392,10 @@ class Parser(object):
         # do transcripts as well
         l["Total number of transcripts"] = "{:,}".format(len(self.transcripts[self.transcripts[TYPE] == mRNA].index))
 
-        df = pd.DataFrame(data=l.items(), columns=["name", "value"])
+        df = pd.DataFrame(data=list(l.items()), columns=["name", "value"])
         return df
 
-    def filter_by_first_features(self, data, feature, start_name, stop_name):
+    def filter_by_first_features(self, data, feature, start_name, stop_name, usesq=True):
         """ Filter data so that it only contains data for the first feature in each transcript.
 
         :param data: dataframe to be filtered by first features
@@ -284,9 +406,9 @@ class Parser(object):
         :raise ValueError if feature is not a parser.FeatureType
         """
         self._check_feature_type(feature)
-        return self._filter_by_feature_pos(data, feature, start_name, stop_name, 1)
+        return self._filter_by_feature_pos(data, feature, start_name, stop_name, 1, usesq)
 
-    def filter_by_last_features(self, data, feature, start_name, stop_name):
+    def filter_by_last_features(self, data, feature, start_name, stop_name, usesq=True):
         """ Filter data so that it only contains data for the last feature in each transcript.
 
         :param data: dataframe to be filtered by last features
@@ -297,15 +419,16 @@ class Parser(object):
         :raise ValueError if feature is not a parser.FeatureType
         """
         self._check_feature_type(feature)
-        return self._filter_by_feature_pos(data, feature, start_name, stop_name, -1)
+        return self._filter_by_feature_pos(data, feature, start_name, stop_name, -1, usesq)
 
-    def _filter_by_feature_pos(self, data, feature, start_name, stop_name, pos):
-        """ Filter data so that only features in first or last position (set by pos) in each transcript are returned
+    def _filter_by_feature_pos(self, data, feature, start_name, stop_name, pos, usesq):
+        """ Filter data so that only features in first or last position (set by pos) in each transcript are returned.
         :param data: dataframe to be filtered by first/last features
         :param feature: the feature type to filter on (e.g. exon, intron)
         :param start_name: the name of the column containing feature start positions
         :param stop_name: the name of the column containing feature stop positions
         :param pos: 1 for first feature, -1 for last feature
+        :param usesq: True if using squashed features, false if using full dataset
         :return: data limited to first/last features
         :raise ValueError if feature is not a parser.FeatureType
         """
@@ -320,7 +443,10 @@ class Parser(object):
         # rename start and stop columns in data to match ours
         data = data.rename(columns={start_name: START, stop_name: STOP})
 
-        join = self.featuredict[feature]
+        if usesq:
+            join = self.sqdict[feature]
+        else:
+            join = self.featuredict[feature]
         # NB both start and stop needed in case of features in different transcripts starting or
         # ending at same position - we consider features with the same start AND stop points to be the same feature.
         full_filter = pd.merge(join[[START, STOP, RNA_ID]], data, on=[START, STOP])
@@ -328,7 +454,11 @@ class Parser(object):
         return self._get_ftrs_by_position(full_filter, pos)
 
     def _get_ftrs_by_position(self, full_filter, pos):
-        """ Filter features from dataframe full_filter by first/last position, depending on value of pos. """
+        """ Filter features from dataframe full_filter by first/last position, depending on value of pos.
+        :param full_filter dataframe to filter
+        :param pos: first (1) or last (-1) feature
+        :return filtered dataframe
+        """
 
         self.logger.debug("Filtering features by position")
 
@@ -348,13 +478,14 @@ class Parser(object):
         full_filter = full_filter.reset_index()
         return full_filter
 
-    def export_to_gtf2(self, filepath, exportlist=None, feature_name=None, split=False, out_to_file=True):
+    def export_to_gtf2(self, filepath, exportlist=None, feature_name=None, split=False, out_to_file=True, usesq=True):
         """ Export the annotation to gtf2 (e.g. for using with featureCounts).
         :param filepath: path to export file(s) to, without gtf extension
         :param exportlist: list of features to be exported
         :param feature_name: name to apply to *all* features exported (unset, all features retain their existing name)
         :param split: True if to split gtf files out by chromosome and strand; default False
         :param out_to_file: True if gtf2 data should be output to file (otherwise returned as dataframe)
+        :param usesq: True if squashed dataset to be used
         :return list of gtf files created
         """
 
@@ -370,10 +501,26 @@ class Parser(object):
 
         # set up output columns
         alldata = []
-        for name, feature in iteritems(self.featuredict):
+
+        # select correct feature dict to use
+        if usesq:
+            dict = self.sqdict
+        else:
+            dict = self.featuredict
+
+        for name, feature in iteritems(dict):
             if name in exportlist:
-                data = feature[[CHROMOSOME, SOURCE, TYPE, START, STOP, SCORE, STRAND, PHASE, GENE_ID, RNA_ID]]
+                try:
+                    data = feature[[CHROMOSOME, SOURCE, TYPE, START, STOP, SCORE, STRAND, PHASE, GENE_ID, RNA_ID]]
+                except KeyError:
+                    # KeyError can be if RNA_ID is missing because we are using squashed representation, so try again
+                    feature[RNA_ID] = ""
+                    data = feature[[CHROMOSOME, SOURCE, TYPE, START, STOP, SCORE, STRAND, PHASE, GENE_ID, RNA_ID]]
                 alldata.append(data)
+
+        if len(exportlist) != len(alldata):
+            self.logger.warn("When exporting gtfs at least one entry in the export list was not found. "
+                             "Export list = [{}]".format(", ".join(exportlist)))
 
         try:
             features = pd.concat(alldata)
@@ -426,6 +573,11 @@ class Parser(object):
                              'transcript_id "' + df[RNA_ID].astype(str) + '";'
 
     def _output_gtf2(self, features, filepath):
+        """ Actual csv output code for output to gtf2
+        :param features: features to output
+        :param filepath: basename of file to output to
+        :return: full output filepath
+        """
 
         filepath = "{}.gtf".format(filepath)
         self.logger.debug("Outputting gtf2 to file {}".format(filepath))
@@ -454,7 +606,7 @@ class Parser(object):
         :param type_names: list of lists of type_names we need: at least one entry in each list is required
         :raise: ValueError if any type name is missing
         """
-        self.logger.info("Checking types exist in gff file: {}".format(
+        self.logger.debug("Checking types exist in gff file: {}".format(
             ", ".join([item for sublist in type_names for item in sublist])))
 
         for typelist in type_names:
@@ -675,6 +827,12 @@ class Parser(object):
         return three_utrs, five_utrs
 
     def _get_UTR_from_CDS(self, cds, is_left_cds, temp_name):
+        """ Build a UTR from a CDS
+        :param cds: coding sequence dataframe
+        :param is_left_cds: whether this is a CDS at left or right side of gene
+        :param temp_name: temporary name for RNA_ID
+        :return dataframe of UTRs
+        """
 
         if is_left_cds:
             selection_range = cds[[temp_name, CDS_START]]
@@ -746,11 +904,14 @@ class Parser(object):
         :param output: name of output file
         """
 
-        self.logger.info("Building antisense features")
+        self.logger.info("Building antisense features: this will take several minutes")
 
         # get extents of entire genes: we will only look for antisense opposite these
-        sense_df = self.featuredict[self.featureType.exon][[CHROMOSOME, SOURCE, TYPE, START, STOP,
+        #sense_df = self.featuredict[self.featureType.exon][[CHROMOSOME, SOURCE, TYPE, START, STOP,
+        #                                                    SCORE, STRAND, PHASE, GENE_ID, RNA_ID]]
+        sense_df = self.sqdict[self.featureType.exon][[CHROMOSOME, SOURCE, TYPE, START, STOP,
                                                             SCORE, STRAND, PHASE, GENE_ID, RNA_ID]]
+
         gene_extents = sense_df.groupby([GENE_ID, CHROMOSOME, STRAND]).agg({START: min,
                                                                             STOP: max,
                                                                             SOURCE: lambda x: x.iloc[0],
@@ -887,6 +1048,7 @@ class Parser(object):
             cs = self.get_chromosomes()
             for c in cs:
                 try:
+                    self.logger.info("Building antisense for chromosome: " + c + " " + strand + "ve strand")
                     result = combined[combined[CHROMOSOME] == c].\
                         groupby(indices[c]).apply(mask, opp_strand).reset_index()
                 except KeyError as e:

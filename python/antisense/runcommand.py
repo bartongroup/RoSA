@@ -33,7 +33,7 @@ def eprint(*args, **kwargs):
 try:
     import drmaa
 except RuntimeError:
-    eprint("No drmaa library: Executables will be called in serial mode.")  # yuk, but logger not initialised yet...
+    eprint("No drmaa library: Running in serial mode.")  # yuk, but logger not initialised yet...
 
 __author__ = "Kira Mourao"
 __email__ = "k.mourao@dundee.ac.uk"

@@ -1,4 +1,22 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
+#  Copyright 2017 Kira Mourao, Nick Schurch
+#
+#  This file is part of RoSA.
+#
+#  RoSA is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  RoSA is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with RoSA.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Unit tests for gffparser module
 """
@@ -229,6 +247,35 @@ class TestGtfParser(unittest.TestCase):
         
         temp_file.close()
 
+        # gtf2 version of overlapping.gff for checking gtf output
+        self.test_gtf_sq = "{}/overlapping_sq.gtf".format(self.existing_path)
+        temp_file = open(self.test_gtf_sq, "w")
+
+        temp_file.write('Chr1\t.\tintron\t1501\t2999\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n')
+        temp_file.write('Chr1\t.\tintron\t3903\t4999\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n')
+        temp_file.write('Chr1\t.\tintron\t5501\t6999\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n')
+
+        temp_file.write('Chr2\t.\tintron\t1501\t2999\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n')
+        temp_file.write('Chr2\t.\tintron\t3903\t4999\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n')
+        temp_file.write('Chr2\t.\tintron\t5501\t6999\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n')
+
+        temp_file.write("Chr1\t.\tintron\t7001\t8999\t.\t-\t.\tgene_id \"gene00002\"; transcript_id \"gene00002\";\n")
+
+        temp_file.write("Chr1\t.\texon\t1050\t1500\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n")
+        temp_file.write("Chr1\t.\texon\t3000\t3902\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n")
+        temp_file.write("Chr1\t.\texon\t5000\t5500\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n")
+        temp_file.write("Chr1\t.\texon\t7000\t9000\t.\t+\t.\tgene_id \"gene00001\"; transcript_id \"gene00001\";\n")
+
+        temp_file.write("Chr2\t.\texon\t1050\t1500\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n")
+        temp_file.write("Chr2\t.\texon\t3000\t3902\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n")
+        temp_file.write("Chr2\t.\texon\t5000\t5500\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n")
+        temp_file.write("Chr2\t.\texon\t7000\t9000\t.\t+\t.\tgene_id \"gene00003\"; transcript_id \"gene00003\";\n")
+
+        temp_file.write("Chr1\t.\texon\t5590\t7000\t.\t-\t.\tgene_id \"gene00002\"; transcript_id \"gene00002\";\n")
+        temp_file.write("Chr1\t.\texon\t9000\t12000\t.\t-\t.\tgene_id \"gene00002\"; transcript_id \"gene00002\";\n")
+
+        temp_file.close()
+
         self.test_fc = "{}/counts.out".format(self.existing_path)
         temp_file = open(self.test_fc, "w")
         temp_file.write("Geneid\tChr\tStart\tEnd\tStrand\tLength\tmini.bam\n")
@@ -326,6 +373,7 @@ class TestGtfParser(unittest.TestCase):
         os.remove(self.seqont_gtf)
         os.remove(self.overlapping_gtf)
         os.remove(self.test_gtf)
+        os.remove(self.test_gtf_sq)
         os.remove(self.test_fc_gtf)
         os.remove(self.test_fc)
         os.remove(self.test_fc_t_utr)
@@ -335,22 +383,28 @@ class TestGtfParser(unittest.TestCase):
         """ Test intron lengths calc. """
 
         p = GtfParser(self.utrseqont_gtf)
-        lengths = p.get_ftr_lengths(p.featureType.intron)[LENGTH].tolist()
+        lengths = p.get_ftr_lengths(p.featureType.intron, usesq=False)[LENGTH].tolist()
         self.assertItemsEqual(lengths, [1499, 1499, 3499, 1097])
+
+        lengths = p.get_ftr_lengths(p.featureType.intron)[LENGTH].tolist()
+        self.assertItemsEqual(lengths, [1499, 1097, 1499])
 
     def test_exon_lengths(self):
         """ Test exon lengths calc. """
 
         p = GtfParser(self.utrseqont_gtf)
-        lengths = p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist()
+        lengths = p.get_ftr_lengths(p.featureType.exon, usesq=False)[LENGTH].tolist()
         self.assertItemsEqual(lengths, [451, 201, 903, 903, 903, 501, 2001])
+
+        lengths = p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist()
+        self.assertItemsEqual(lengths, [451, 903, 501, 2001])
 
     def test_exons_by_gene(self):
         """ Test exon counts calc. """
 
         p = GtfParser(self.utrseqont_gtf)
         exons_by_gene = p.get_exons_per_gene()[EXON_COUNTS].tolist()
-        self.assertItemsEqual(exons_by_gene, [7])
+        self.assertItemsEqual(exons_by_gene, [11.0/3])
 
     def test_transcripts_by_gene(self):
         """ Test transcript counts calc. """
@@ -363,29 +417,59 @@ class TestGtfParser(unittest.TestCase):
         """ Test exon lengths when genes in +ve and -ve strands overlap """
 
         p = GtfParser(self.overlapping_gtf)
-        lengths = p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist()
+        lengths = p.get_ftr_lengths(p.featureType.exon, usesq=False)[LENGTH].tolist()
         self.assertItemsEqual(lengths, [451, 201, 903, 903, 903, 501, 2001, 451, 201, 903, 903, 903, 501, 2001,
                                         1411, 3001, 3001])
+
+        lengths = p.get_ftr_lengths(p.featureType.exon)[LENGTH].tolist()
+        self.assertItemsEqual(lengths, [451, 903, 501, 2001, 451, 903, 501, 2001,
+                                        1411, 3001])
 
     def test_overlapping_genes_exon_count(self):
         """ Test exon counts when genes in +ve and -ve strands overlap """
 
         p = GtfParser(self.overlapping_gtf)
         exons_by_gene = p.get_exons_per_gene()[EXON_COUNTS].tolist()
-        self.assertItemsEqual(exons_by_gene, [7, 3, 7])
+        self.assertItemsEqual(exons_by_gene, [11.0/3, 3.0/2, 11.0/3])
 
     def test_overlapping_genes_intron_lengths(self):
         """ Test intron lengths when genes in +ve and -ve strands overlap """
 
         p = GtfParser(self.overlapping_gtf)
-        lengths = p.get_ftr_lengths(p.featureType.intron)[LENGTH].tolist()
+        lengths = p.get_ftr_lengths(p.featureType.intron,usesq=False)[LENGTH].tolist()
         self.assertItemsEqual(lengths, [1499, 1499, 3499, 1097, 1499, 1499, 3499, 1097, 1999])
 
-    def test_output_to_gtf2(self):
+        lengths = p.get_ftr_lengths(p.featureType.intron)[LENGTH].tolist()
+        self.assertItemsEqual(lengths, [1499, 1097, 1499, 1499, 1097, 1499, 1999])
+
+    def test_output_to_gtf2_with_sq(self):
         """ Test gff input correctly output to gtf """
 
         p = GtfParser(self.overlapping_gtf)
         p.export_to_gtf2(os.path.splitext(self.output_gtf)[0])
+
+        # check file exists
+        self.assertTrue(os.path.exists(self.output_gtf), "Output gtf file does not exist")
+
+        # check contents correspond to gtf2 format
+        new_gtf_handle = open(self.output_gtf, "r")
+        test_gtf_handle = open(self.test_gtf_sq, "r")
+
+        newdata = new_gtf_handle.readlines()
+        testdata = test_gtf_handle.readlines()
+
+        self.assertListEqual(newdata, testdata)
+
+        new_gtf_handle.close()
+        test_gtf_handle.close()
+
+        os.remove(self.output_gtf)
+
+    def test_output_to_gtf2_without_sq(self):
+        """ Test gff input correctly output to gtf """
+
+        p = GtfParser(self.overlapping_gtf)
+        p.export_to_gtf2(os.path.splitext(self.output_gtf)[0], usesq=False)
 
         # check file exists
         self.assertTrue(os.path.exists(self.output_gtf), "Output gtf file does not exist")
@@ -480,7 +564,7 @@ class TestGtfParser(unittest.TestCase):
         p = GtfParser("Data/cds2.gtf")
         p.export_to_gtf2(os.path.splitext(self.temp_gtf)[0], p.featureType.three_prime_UTR)
         data_p = pd.read_csv(self.temp_gtf, header=None, sep="\t")
-        self.assertEquals(len(data_p), 2)
+        self.assertEquals(len(data_p), 1)
 
         p = GtfParser("Data/cds3.gtf")
         p.export_to_gtf2(os.path.splitext(self.temp_gtf)[0], [p.featureType.exon, p.featureType.intron,

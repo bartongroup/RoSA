@@ -148,6 +148,9 @@ class GffParser(Parser):
 
         self.df.columns = [CHROMOSOME, SOURCE, TYPE, START, STOP, SCORE, STRAND, PHASE, ATTRIBUTES]
 
+        # set types correctly
+        self.df[START] = self.df[START].astype(float)
+        self.df[STOP] = self.df[STOP].astype(float)
         self.logger.info("Extracting gff attributes to columns")
 
         # convert any specialised feature names to gene/exon/mRNA/etc
