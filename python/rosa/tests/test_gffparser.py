@@ -26,8 +26,8 @@ import tempfile
 import os.path
 import pandas as pd
 
-from antisense.gffparser import GffParser
-from antisense.constants import *
+from rosa.gffparser import GffParser
+from rosa.constants import *
 
 __author__ = "Kira Mourao"
 __email__ = "k.mourao@dundee.ac.uk"

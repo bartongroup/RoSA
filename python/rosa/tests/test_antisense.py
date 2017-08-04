@@ -24,7 +24,7 @@ Unit tests for antisense module
 import unittest
 import csv
 import pandas as pd
-from antisense.antisense import Antisense
+from rosa.antisense import Antisense
 
 __author__ = "Kira Mourao"
 __email__ = "k.mourao@dundee.ac.uk"
