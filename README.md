@@ -47,9 +47,13 @@ Load the package to get access to RoSA:
 library("rosa", lib.loc="/Library/Frameworks/R.framework/Versions/3.3/Resources/library")
 ```
 
-RoSA's scripts rely on a python package, viewseq, which can be installed via:
+RoSA's scripts are set up in a python package which can be installed via:
 ```
 pip install git+https://github.com/bartongroup/km-rosa.git#subdirectory=python/antisense
+```
+and uninstalled via:
+```
+pip uninstall antisense
 ```
 
 
@@ -78,8 +82,7 @@ An additional -i option allows the user to input a file containing the extents o
 
 ## Known issues
 
-Installing pysam via pip can result in a [broken installation](https://github.com/pysam-developers/pysam/issues/475)
-Workaround: use bioconda instead.
+
 
 ## Contact information
 
