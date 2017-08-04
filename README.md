@@ -31,8 +31,6 @@ The python scripts are targetted for [python 2.7](https://www.python.org/downloa
 - scipy (version 0.17.1 - will not work with latest version)
 - numpy
 - pandas (version 0.18 - 0.19.2 - will not work with latest version)
-- pysam
-- pyyaml
 - six
 - (optionally) drmaa
 
@@ -51,7 +49,7 @@ library("rosa", lib.loc="/Library/Frameworks/R.framework/Versions/3.3/Resources/
 
 RoSA's scripts rely on a python package, viewseq, which can be installed via:
 ```
-pip install git+https://github.com/bartongroup/km-rosa.git#subdirectory=python/viewseq
+pip install git+https://github.com/bartongroup/km-rosa.git#subdirectory=python/antisense
 ```
 
 
@@ -70,11 +68,11 @@ Help for the R rosa functionality can be found by typing `help(rosa)` after inst
 The python scripts can be used to 
 * create an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts via your favourite read counting tool (e.g. [featureCounts](http://subread.sourceforge.net)):
 ```
-python makeannotation.py -a <annotation file as gff or gtf> -o <output filename without file extension>
+make_annotation -a <annotation file as gff or gtf> -o <output filename without file extension>
 ```
 * generate sense and antisense counts of reads at splice junctions. The script takes the standard annotation (as gtf/gff) and corresponding alignment (as bam) and outputs counts of spliced sense and antisense reads to a designated output file. Because this script must process an entire bam file of reads, it is very slow. The script is set up to break the bam file into chunks and process each chunk separately. On a cluster with drmaa installed, the script will use drmaa to submit each chunk as a separate job. On a single machine, the script will spawn a new process to run each chunk separately. Once all of the jobs have run, the script collates the results to give a count of the spliced reads. The script is run as follows:
 ```
-python antisense.py -a <annotation file as gff or gtf> -l <alignment file as bam> -o <output file>
+count_spliced -a <annotation file as gff or gtf> -l <alignment file as bam> -o <output file>
 ```
 An additional -i option allows the user to input a file containing the extents of all introns, which is otherwise calculated as part of splice counting process. This is primarily useful for testing on the same annotation multiple times, as the intron file can be calculated once and re-used, saving some time. The location of the intron file is output by the script.
 
