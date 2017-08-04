@@ -83,7 +83,8 @@ An additional -i option allows the user to input a file containing the extents o
 
 ## Known issues
 
-RoSA's python scripts fail with the latest versions of scipy and pandas. This is being investigated.
+* RoSA is incompatible with pandas version 0.20.1, due to [bug #16921](https://github.com/pandas-dev/pandas/issues/16921)
+* RoSA fails with the latest version of scipy. This is being investigated.
 
 ## Contact information
 
