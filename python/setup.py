@@ -35,7 +35,7 @@ setup(name='rosa',
       install_requires=[
           'pandas>=0.18.0,<=0.19.2',
           'numpy',
-          'scipy>=0.16.1,<=0.17.1',
+          'scipy',  ###>=0.16.1,<=0.17.1',
           'drmaa',
           'six',
       ],
