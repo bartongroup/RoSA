@@ -196,7 +196,7 @@ class Antisense:
                 pos = lastpos + step - 1
 
                 # on cluster this seems to need to be ../anti_reads_as_job.py
-                cmd = ["python", "../anti_reads_as_job.py", "-l", alignment_file, "-i", intron_file, "-s",
+                cmd = ["antisense_job", "-l", alignment_file, "-i", intron_file, "-s",
                        str(lastpos), "-e", str(pos), "-o", chro]
                 filename = "anti-{}.{}-{}".format(chro, lastpos, pos)
 
