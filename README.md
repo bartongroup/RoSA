@@ -28,9 +28,9 @@ install.packages("LSD")
 ```
 
 The python scripts are targetted for [python 2.7](https://www.python.org/download/releases/2.7/) and depend on:
-- scipy (version 0.16.1 - 0.17.1 - will not work with latest version)
+- scipy (version 0.16.1 - 0.17.1 - see known issues)
 - numpy
-- pandas (version 0.18 - 0.19.2 - will not work with latest version)
+- pandas (not 0.20.1 - see known issues)
 - six
 - (optionally) drmaa
 
@@ -84,7 +84,7 @@ An additional -i option allows the user to input a file containing the extents o
 ## Known issues
 
 * RoSA is incompatible with pandas version 0.20.1, due to [bug #16921](https://github.com/pandas-dev/pandas/issues/16921)
-* RoSA fails with the latest version of scipy. This is being investigated.
+* RoSA fails with the some versions of scipy. This is being investigated.
 
 ## Contact information
 
