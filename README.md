@@ -20,6 +20,7 @@ The data should have already been aligned to an annotation. RoSA will need the g
 
 ### Dependencies
 
+RoSA (currently) is a combination of an R package and some python scripts for preprocessing.
 The R package depends on one third-party package, LSD, which you may need to install first, 
 if it is not present already:
 
@@ -47,7 +48,7 @@ Load the package to get access to RoSA:
 library("rosa", lib.loc="/Library/Frameworks/R.framework/Versions/3.3/Resources/library")
 ```
 
-RoSA's scripts are set up in a python package which can be installed via:
+RoSA's python scripts are set up in a python package which can be installed via:
 ```
 pip install git+https://github.com/bartongroup/km-rosa.git#subdirectory=python
 ```
@@ -60,7 +61,7 @@ The pip installer will handle installing the python dependencies with the correc
 
 ## How to use RoSA
 
-RoSA (currently) is a combination of an R package and some python scripts. The R package takes as input datasets containing several different read counts:
+The R package takes as input datasets containing several different read counts:
 
 - Full read counts by gene
 - Antisense counts by gene (via RoSA's python script (*makeannotation.py*) to create an antisense annotation, and then read counting as usual)
@@ -70,7 +71,7 @@ At least one of:
 
 Help for the R rosa functionality can be found by typing `help(rosa)` after installing and loading the RoSA R package.
 
-The python scripts can be used to 
+The python preprocessing scripts can be used to 
 * create an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts via your favourite read counting tool (e.g. [featureCounts](http://subread.sourceforge.net)):
 ```
 make_annotation -a <annotation file as gff or gtf> -o <output filename without file extension>
