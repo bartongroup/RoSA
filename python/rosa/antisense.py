@@ -283,6 +283,18 @@ def main():
 
     args = argparser.parse_args()
 
+    # check that necessary files exist
+    if not os.path.isfile(args.annot_file):
+        print("{} not found".format(args.annot_file))
+        return
+    if not os.path.isfile(args.align_file):
+        print("{} not found".format(args.align_file))
+        return
+    bai_file = os.path. os.path.splitext(args.align_file)[0] + ".bai"
+    if not os.path.isfile(bai_file):
+        print("{} not found: An index for the bam file is needed for processing.".format(bai_file))
+        return
+
     a = Antisense()
     if args.input_file:
         a.find_anti_with_sense_structure(args.annot_file, args.align_file, args.output_file, args.input_file)
