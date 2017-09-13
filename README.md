@@ -63,20 +63,21 @@ The pip installer will handle installing the python dependencies with the correc
 
 The R package takes as input datasets containing several different read counts:
 
-- Full read counts by gene
-- Antisense counts by gene (via RoSA's python script (*makeannotation.py*) to create an antisense annotation, and then read counting as usual)
+1. Full read counts by gene
+2. Antisense counts by gene (via RoSA's python script (*makeannotation.py*) to create an antisense annotation, and then read counting as usual)
 At least one of:
-- Spike-in sense and antisense counts (by aligning the reads data to the spike-ins, and generating read counts for each strand)
-- Spliced sense and antisense counts (via RoSA's python script (*antisense.py*) to filter spliced reads which occur at known splice junctions)
+3a. Spike-in sense and antisense counts (by aligning the reads data to the spike-ins, and generating read counts for each strand)
+3b. Spliced sense and antisense counts (via RoSA's python script (*antisense.py*) to filter spliced reads which occur at known splice junctions)
 
-Help for the R rosa functionality can be found by typing `help(rosa)` after installing and loading the RoSA R package.
+Help for the R rosa functionality can be found by typing `help(rosa)` after installing and loading the RoSA R package. Since some of RoSA's inputs are non-standard, the python preprocessing scripts are supplied to make it easier to generate the inputs required by the package (specifically, input (2) and input (3a)).
 
-The python preprocessing scripts can be used to 
-* create an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts via your favourite read counting tool (e.g. [featureCounts](http://subread.sourceforge.net)):
+The *make_annotation* script creates an antisense annotation (as gtf) from a standard annotation (as gff or gtf), which can then be used to generate antisense read counts (input 2) via your favourite read counting tool (e.g. [featureCounts](http://subread.sourceforge.net)):
 ```
 make_annotation -a <annotation file as gff or gtf> -o <output filename without file extension>
 ```
-* generate sense and antisense counts of reads at splice junctions. The script takes the standard annotation (as gtf/gff) and corresponding alignment (as bam) and outputs counts of spliced sense and antisense reads to a designated output file. An index file (.bai file) should also have been pre-generated and be in the same directory as the bam file. Because the script must process an entire bam file of reads, it is very slow. The script is set up to break the bam file into chunks and process each chunk separately using sambamba and some custom filtering. On a cluster with drmaa installed, the script will use drmaa to submit each chunk as a separate job. On a single machine, the script will spawn a new process to run each chunk separately. Once all of the jobs have run, the script collates the results to give a count of the spliced reads. The script is run as follows:
+The annotation produced by *make_annotation* only contains antisense features and so cannot be used in place of a standard annotation.
+
+The *count_spliced* script generates sense and antisense counts of reads at splice junctions (input 3a). The script takes a standard annotation (as gtf/gff) and corresponding alignment (as bam) and outputs counts of spliced sense and antisense reads to a designated output file. An index file (.bai file) should also have been pre-generated and be in the same directory as the bam file. Because the script must process an entire bam file of reads, it is very slow. The script is set up to break the bam file into chunks and process each chunk separately using sambamba and some custom filtering. On a cluster with drmaa installed, the script will use drmaa to submit each chunk as a separate job. On a single machine, the script will spawn a new process to run each chunk separately. Once all of the jobs have run, the script collates the results to give a count of the spliced reads. The script is run as follows:
 ```
 count_spliced -a <annotation file as gff or gtf> -l <alignment file as bam> -o <output file>
 ```
