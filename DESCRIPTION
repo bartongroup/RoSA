@@ -21,7 +21,8 @@ Imports:
 Suggests:
     testthat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    boot
 URL: https://github.com/bartongroup/ROSA, http://www.compbio.dundee.ac.uk
 BugReports: https://github.com/bartongroup/ROSA/issues
 RoxygenNote: 6.0.1

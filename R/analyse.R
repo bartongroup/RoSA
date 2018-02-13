@@ -450,39 +450,40 @@ plot_single_data_and_spikeins <- function(sp,
   }
   else
   {
-    heatscatter(log10(data$tpmsense),log10(data$tpmanti), #colpal="spectral",
+    heatscatter(log10(data$tpmsense),log10(data$tpmanti),
                 cor=FALSE,cex.main=1, xlim=c(log10(xmin),log10(xmax)), ylim=c(log10(ymin),log10(ymax)),
                 xlab=expression('log'[10]*'(Sense TPM)'), ylab=expression('log'[10]*'(Antisense TPM)'), main='')
     
     use <- is.finite(log10(data$tpmanti)) & is.finite(log10(data$tpmsense))
-    m = lm(log10(data$tpmanti[use])~log10(data$tpmsense[use]))
+    
+    # calculate R-squared + confidence interval
+    expr = makeR2expression(log10(data$tpmanti[use]),log10(data$tpmsense[use]))
     
     if (show_spikeins)
     {
       legwidth = strwidth("Spike-in ratio: 0.0000")
       temp <-legend("bottomright", bty="n", legend = c(" "," ", " "), text.width=legwidth)
-      text(temp$rect$left + temp$rect$w, temp$text$y, 
-           c(parse(text=paste("R", "^2", ": ",format(round(summary(m)$adj.r.squared,digits=2),nsmall=2))),
-             paste("Spike-in ratio: ",format(round(summary_ratios[[1]],digits=4),nsmall=4), "SD: ", format(round(summary_rmse[[1]],digits=8),nsmall=8)),
-             paste("Splices ratio: ",format(round(summary_ratios[[2]],digits=4),nsmall=4), "SD: ", format(round(summary_rmse[[2]],digits=8),nsmall=8))), 
-             pos=2, cex=1)
-    }
-    else
-    {
-      legend("bottomright", bty="n", legend=parse(text=paste("R", "^2", ": ",format(round(summary(m)$adj.r.squared, digits=2),nsmall=2))), cex=1)
-    }
-
-    if (show_spikeins)
-    {
+      
+      text(temp$rect$left + temp$rect$w, temp$text$y,
+           c(as.expression(expr),
+             paste("Spike-in ratio: ",format(round(summary_ratios[[1]],digits=4),nsmall=4), "SD: ", 
+                   format(round(summary_rmse[[1]],digits=8),nsmall=8)),
+             paste("Splices ratio: ",format(round(summary_ratios[[2]],digits=4),nsmall=4), "SD: ", 
+                   format(round(summary_rmse[[2]],digits=8),nsmall=8))),
+           pos=2, cex=1)
+      
       par(new=TRUE)
-  
+      
       plot(log10(sp$tpmsense), log10(sp$tpmanti), pch=sp_pch, cex=1, col='white', bg='black', axes = FALSE, xlab = '', ylab = '',
            xlim=c(log10(xmin),log10(xmax)), ylim=c(log10(ymin),log10(ymax)))
       use <- is.finite(log10(sp$tpmanti)) & is.finite(log10(sp$tpmsense))
       abline(lm(log10(sp$tpmanti[use]) ~ log10(sp$tpmsense[use])), col='black')
       legend(legx, legy, legend_labels, col = legend_colours, pt.bg = legend_bg, lty = legend_lty, pch = legend_pch)
     }
-    
+    else
+    {
+      legend("bottomright", bty="n", legend=as.expression(expr),cex=1)
+    }
   }
   if (show_spikeins)
   {
@@ -493,6 +494,37 @@ plot_single_data_and_spikeins <- function(sp,
     title(main=plot_title, line=-1.2)
   }
   dev.off()
+}
+
+#' Build the legend text for R^2 reporting
+#' Adds 95% CI if boot package is available, otherwise does not
+#' @param antidata the antisense read counts (or logs of)
+#' @param sensedata the sense read counts (or logs of)
+makeR2expression <- function(antidata, sensedata)
+{
+  newdata = cbind(antidata,sensedata)
+  colnames(newdata) = c("anti","sense")
+  newdata = as.data.frame(newdata)
+  
+  if (requireNamespace("boot",quietly=TRUE))
+  {
+    # we have the boot package, so calculate the R^2 confidence intervals
+    rsqstats = boot::boot(newdata, function(rdata,indices) summary(lm(anti~sense,rdata[indices,]))$r.squared,R=100)
+    lowerCI = quantile(rsqstats$t,c(0.025,0.975))[[1]]
+    upperCI = quantile(rsqstats$t,c(0.025,0.975))[[2]]
+    
+    rvals = paste(format(round(rsqstats$t0,digits=2),nsmall=2), " (", 
+                  format(round(lowerCI,digits=2),nsmall=2),", ",
+                  format(round(upperCI,digits=2),nsmall=2),")",sep="")
+    
+    expr = bquote(R^2~(95*"%"~"CI") == .(rvals))
+  }
+  else
+  {
+    # just use base R and calculate R^2
+    expr = bquote(R^2==.(format(round(summary(lm(anti~sense,newdata))$r.squared,digits=2),nsmall=2)))
+  }
+  return(expr)
 }
 
 #' Plot sense/antisense expression boxplots of a set of reads
