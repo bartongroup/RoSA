@@ -16,6 +16,7 @@
 MAKE_ANNOT_PATH = file.path('..','python','rosa','make_annotation.py')
 COUNT_SPLICED_PATH = file.path('..','python','rosa','antisense.py')
 
+
 #' Build an antisense annotation
 #' 
 #' make_annotation creates an antisense annotation (as gtf) from 
