@@ -13,26 +13,23 @@
 # You should have received a copy of the GNU General Public License
 # along with RoSA  If not, see <http://www.gnu.org/licenses/>.
 
-MAKE_ANNOT_PATH = file.path('..','python','rosa','make_annotation.py')
-COUNT_SPLICED_PATH = file.path('..','python','rosa','antisense.py')
-
-
 #' Build an antisense annotation
 #' 
 #' make_annotation creates an antisense annotation (as gtf) from 
 #' a standard annotation (as gff or gtf), which can then be used to generate 
-#' antisense read counts (input 2) via your favourite read counting tool 
+#' antisense read counts via your favourite read counting tool 
 #' (e.g. featureCounts). The annotation produced by make_annotation only 
 #' contains antisense features and so cannot be used in place of a standard 
 #' annotation.
-#' *** Depends on python being installed! ***
 #' @param annotation_file annotation file as gff or gtf
 #' @param output_file output file name without file extension
 #' @export
 make_annotation <- function(annotation_file, output_file)
 {
-  system2('python', 
-          args=c(MAKE_ANNOT_PATH,'-a',annotation_file,'-o',output_file),
+  baseout = basename(output_file)
+  pathout = normalizePath(dirname(output_file))
+  
+  system2("make_annotation", args=c('-a',normalizePath(annotation_file),'-o',file.path(pathout,baseout)),
           wait=TRUE)
 }
 
@@ -50,14 +47,15 @@ make_annotation <- function(annotation_file, output_file)
 #' each chunk as a separate job. On a single machine, the script will spawn 
 #' a new process to run each chunk separately. Once all of the jobs have run, 
 #' the script collates the results to give a count of the spliced reads.
-#' *** Depends on python and sambamba being installed! ***
 #' @param annotation_file annotation file as gff or gtf
 #' @param alignment_file alignment file as bam
 #' @param output_file output file name without file extension
 #' @export
 count_spliced <- function(annotation_file, alignment_file, output_file)
 {
-  system2('python', 
-          args=c(COUNT_SPLICED_PATH,'-a',annotation_file,'-l', alignment_file, '-o',output_file),
-          wait=TRUE)
+  baseout = basename(output_file)
+  pathout = normalizePath(dirname(output_file))
+  
+  system2('count_spliced', args=c('-a',normalizePath(annotation_file),'-l', normalizePath(alignment_file), 
+                                  '-o',file.path(pathout,baseout)), wait=TRUE)
 }
