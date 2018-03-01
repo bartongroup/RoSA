@@ -96,7 +96,8 @@ Both scripts output timestamped logfiles recording progress.
 ## Known issues
 
 * RoSA is incompatible with pandas version 0.20.1, due to [bug #16921](https://github.com/pandas-dev/pandas/issues/16921)
-* "command not found" errors when calling the preprocessing scripts from RStudio can be caused on Macs by a bug where RStudio uses an incorrect PATH variable. Running RStudio from the command line avoids the problem: open /Applications/RStudio.app 
+* "command not found" errors when calling the preprocessing scripts from RStudio can be caused on Macs by a bug where RStudio uses an incorrect PATH variable. Running RStudio from the command line avoids the problem: 
+`open /Applications/RStudio.app`
 
 ## Contact information
 
