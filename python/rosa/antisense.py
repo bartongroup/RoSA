@@ -27,6 +27,7 @@ import pandas.io.common
 import os
 import tempfile
 import shutil
+import inspect
 
 from runcommand import RunCommand
 from parser_factory import ParserFactory
@@ -51,6 +52,9 @@ class Antisense:
         self.__start_col = "Start"  # name of Start column in featureCounts output
         self.__stop_col = "End"    # name of Stop column in featureCounts output
         self.__geneid = "Geneid"   # name of Gene id column in featureCounts output
+
+        self.__filename = inspect.getframeinfo(inspect.currentframe()).filename
+        self.__path = os.path.dirname(os.path.abspath(self.__filename))
 
     def id_structured_antisense(self, exondata, introndata, output, k=0.5, min_reads=100):
         """ Find genes where the antisense expression is structured as the sense expression is
@@ -290,7 +294,7 @@ def main():
     if not os.path.isfile(args.align_file):
         print("{} not found".format(args.align_file))
         return
-    bai_file = os.path. os.path.splitext(args.align_file)[0] + ".bai"
+    bai_file = os.path. os.path.splitext(args.align_file)[0] + ".bam.bai"
     if not os.path.isfile(bai_file):
         print("{} not found: An index for the bam file is needed for processing.".format(bai_file))
         return

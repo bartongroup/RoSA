@@ -96,7 +96,7 @@ class AntisenseJob:
 
         # because we are expanding into a sam file and then reading, we don't want to create giant files...
         # so filter out small bits of the bam file at a time
-        # use position rather than a a region to select reads, so we don't get the same read twice
+        # use position rather than a region to select reads, so we don't get the same read twice
         # don't put -F argument in quotes if using serial call - will break subprocess
         cmd = ["sambamba", "view", "-F",
                "position > {} and position <= {} and cigar =~ /[0-9A-Z]*N[0-9A-Z]*/ and proper_pair and mapping_quality>50 and [NH]==1".format(last_pos, position),
