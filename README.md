@@ -37,6 +37,13 @@ The python scripts are targetted for [python 2.7](https://www.python.org/downloa
 
 The python script to find and count spliced antisense and sense reads also depends on [sambamba](http://lomereiter.github.io/sambamba/) being installed.
 
+Included in this repository is a conda environment that captures all the dependancies required for the package. To create the environment, and load it prior to installation of the pip and R rosa packages:
+
+```
+conda env create -f conda_env.yml
+source activate RoSA
+```
+
 ## Installation
 
 To install the R rosa package from github, while RoSA is still a private repository, use `devtools::install_github`. You will need to install devtools if you have not already done so, and to obtain a personal access token through your github account.
