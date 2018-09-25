@@ -131,6 +131,7 @@ dependencies:
   - pcre=8.42=h439df22_0
   - qt=5.6.3=h39df351_0
   - scipy=1.1.0=py27hc49cb51_0
+  - tar=1.29=h470a237_1
   - pip:
     - drmaa==0.7.8
     - poretools==0.6.0
