@@ -20,13 +20,23 @@ The data should have already been aligned to an annotation. RoSA will need the g
 
 ### Dependencies
 
-RoSA (currently) is a combination of an R package and some python scripts for preprocessing.
+RoSA (currently) is a combination of an R package and some python scripts for preprocessing. Included in this repository is a conda environment that captures all the dependancies required for the package. To create the environment, and load it prior to installation of the pip and R rosa packages:
+
+```
+conda env create -f conda_env.yml
+source activate RoSA
+```
+
+#### R Dependencies
+
 The R package depends on one third-party package, LSD, which you may need to install first, 
 if it is not present already:
 
 ```
 install.packages("LSD")
 ```
+
+#### Python Dependencies
 
 The python scripts are targetted for [python 2.7](https://www.python.org/download/releases/2.7/) and depend on:
 - scipy (version 0.16.1 - 0.17.1 - see known issues)
@@ -37,34 +47,35 @@ The python scripts are targetted for [python 2.7](https://www.python.org/downloa
 
 The python script to find and count spliced antisense and sense reads also depends on [sambamba](http://lomereiter.github.io/sambamba/) being installed.
 
-Included in this repository is a conda environment that captures all the dependancies required for the package. To create the environment, and load it prior to installation of the pip and R rosa packages:
-
-```
-conda env create -f conda_env.yml
-source activate RoSA
-```
-
 ## Installation
 
-To install the R rosa package from github, while RoSA is still a private repository, use `devtools::install_github`. You will need to install devtools if you have not already done so, and to obtain a personal access token through your github account.
-```
-devtools::install_github("bartongroup/km-rosa", auth_token="<your PAT>")
-```
-Load the package to get access to RoSA:
-```
-library("rosa", lib.loc="/Library/Frameworks/R.framework/Versions/3.3/Resources/library")
-```
+### Installing the RoSA python Package
 
 RoSA's python scripts are set up in a python package which can be installed via:
+
 ```
 pip install git+https://github.com/bartongroup/km-rosa.git#subdirectory=python
 ```
+
 and uninstalled via:
+
 ```
 pip uninstall rosa
 ```
-The pip installer will handle installing the python dependencies with the correct versions.
 
+The pip installer will handle installing any additional python dependencies with the correct versions.
+
+### Installing the RoSA R Package
+
+To install the R rosa package directly from github use `devtools::install_github`. You will need to install devtools if you have not already done so.
+```
+devtools::install_github("bartongroup/km-rosa")
+
+```
+Load the package to get access to RoSA:
+```
+library("rosa")
+```
 
 ## How to use RoSA
 
