@@ -25,7 +25,10 @@ RoSA (currently) is a combination of an R package and some python scripts for pr
 ```
 conda env create -f conda_env.yml
 source activate RoSA
+export TAR=`which tar`
 ```
+
+(Note: setting the environment variable `tar` here is required to avoid [this issue](https://github.com/r-lib/devtools/issues/1722])).
 
 #### R Dependencies
 
@@ -67,10 +70,12 @@ The pip installer will handle installing any additional python dependencies with
 
 ### Installing the RoSA R Package
 
-To install the R rosa package directly from github use `devtools::install_github`. You will need to install devtools if you have not already done so.
-```
-devtools::install_github("bartongroup/RoSA")
+To install the R rosa package directly from github use `devtools::install_github`. You will need to install devtools if you have not already done so. (Note: the `options(unzip = "internal")` call here is only required is you are using the provided conda env, see [this issue](https://github.com/r-lib/devtools/issues/1722)).
 
+```
+library(devtools)
+options(unzip = "internal")
+devtools::install_github("bartongroup/RoSA")
 ```
 Load the package to get access to RoSA:
 ```
