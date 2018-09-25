@@ -54,7 +54,7 @@ The python script to find and count spliced antisense and sense reads also depen
 RoSA's python scripts are set up in a python package which can be installed via:
 
 ```
-pip install git+https://github.com/bartongroup/km-rosa.git#subdirectory=python
+pip install git+https://github.com/bartongroup/RoSA.git#subdirectory=python
 ```
 
 and uninstalled via:
@@ -69,7 +69,7 @@ The pip installer will handle installing any additional python dependencies with
 
 To install the R rosa package directly from github use `devtools::install_github`. You will need to install devtools if you have not already done so.
 ```
-devtools::install_github("bartongroup/km-rosa")
+devtools::install_github("bartongroup/RoSA")
 
 ```
 Load the package to get access to RoSA:
