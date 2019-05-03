@@ -1,4 +1,5 @@
 # RoSA: a tool for the Removal of Spurious Antisense
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2661378.svg)](https://doi.org/10.5281/zenodo.2661378)
 
 In stranded RNA-Seq experiments we have the opportunity to detect and measure antisense transcription, important since antisense transcripts impact gene transcription in several different ways. Stranded RNA-Seq determines the strand from which an RNA fragment originates, and so can be used to identify where antisense transcription may be implicated in gene regulation. 
 
