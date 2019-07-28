@@ -29,7 +29,7 @@ source activate RoSA
 export TAR=`which tar`
 ```
 
-(Note: setting the environment variable `tar` here is required to avoid [this issue](https://github.com/r-lib/devtools/issues/1722])).
+(Note: setting the environment variable `tar` here is required to avoid [this issue](https://github.com/r-lib/devtools/issues/1722)).
 
 #### R Dependencies
 
